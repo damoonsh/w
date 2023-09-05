@@ -1,5 +1,4 @@
 ---
-layout: post
 title: "The Role of Image Augmentation on Brain MRI Segmentation Accuracy"
 date: 2022-11-23
 ---
