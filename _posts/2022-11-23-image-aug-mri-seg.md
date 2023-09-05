@@ -1,4 +1,5 @@
 ---
+layout: post
 title: "The Role of Image Augmentation on Brain MRI Segmentation Accuracy"
 date: 2022-11-23
 ---
@@ -29,7 +30,7 @@ MRI images used for this paper are originally used in [4] and [7]. This dataset 
 
 MRI images have different shapes, patterns, and colors (figure 1). This can make it difficult for the model to find the patterns.
 
-![color-space-variation](/images/figure-1.png)
+![color-space-variation](/assets/figure-1.png)
 
 ## Phase Variation
 
@@ -41,17 +42,17 @@ There are a variety of different geometric shapes that represent particular Glio
 
 In order to objectively analyze different progression levels we can group samples based on their affected area which would be the number of pixels to be segmented. The number of pixels to be segmented can be a factor in the accuracy of the model as well. While evaluating different preprocessing pipelines, this variable has been taken into account, and accuracy is compared across different categories based on how large the segmentation area is. There is an obvious imbalance with respect to the number of pixels with the samples. The combined number of positive samples having less than 3200 pixels of interest is 491 whereas positive samples with more than equal to 3200 pixels of interest are 882. This can bias the model where MRI images with small tumors are not segmented correctly for being less frequent than ones with big tumors.
 
-![color-space-variation](/images/table-1.png)
+![color-space-variation](/assets/table-1.png)
 
 In order to train a robust model, the training data should have sufficient diversity with respect to tumor progressions and shapes. Meaning that different tumor sizes within the training data will make the model more robust. In this paper, the correlation between area of segmentation, and model accuracy is investigated to illustrate possible biases. The idea is that since there are more images in category C5, the model will do better at recognizing large tumors, ignoring smaller ones.
 
-![color-space-variation](/images/figure-2.png)
+![color-space-variation](/assets/figure-2.png)
 
 # Training
 
 Same model configuration is used for all the experiments [1] since the main focus of this paper is on preprocessing techniques. The model architecture is u-net like architecture (figure 3(a)). Details of the model training and configuration are summarized in figure 3(b). Different transformation functions are used on the original dataset to generate different dataset. As an experiment, some training sets are designed to be imbalanced with respect to the number of positive and negative samples. It is important to note that by being balanced, I mean that the number is an acceptable difference between the number of positive and negative samples (if the difference between two different classes is less than 100 then it is considered balanced).
 
-![color-space-variation](/images/figure-3.png)
+![color-space-variation](/assets/figure-3.png)
 
 The goal of the experiments is to investigate if the accuracy increases with enhanced preprocessing or not.
 
@@ -59,7 +60,7 @@ The goal of the experiments is to investigate if the accuracy increases with enh
 
 Dice coefficient and Intersection over union (IOU) are the main metrics used for evaluation but binary accuracy is also recorded during training. Dice coefficient gauges the similarity of two images:
 
-![color-space-variation](/images/dice.png)
+![color-space-variation](/assets/dice.png)
 
 where X and Y represent pixels of images. IOU measures the correct segmentation area and gives a relative estimate with respect to segmentation on two sides.
 
@@ -67,11 +68,11 @@ where X and Y represent pixels of images. IOU measures the correct segmentation 
 
 In order to keep the project minimal, only two transformations are used: Log transformation and power law (figure 4). Log transformation maps a narrow range of low intensity values in the input to a wider range of values and power-law is used to increase contrast within the image.
 
-![color-space-variation](/images/figure-4.png)
+![color-space-variation](/assets/figure-4.png)
 
 Figure 5 shows the result of log and power-law on an image. Applying power-law transformation (figure 5(c)) has increased the contrast around the target area, making the green value more visible within the picture. This slight change can increase model accuracy since higher contrast between adjacent pixels can enhance the segmentation accuracy. The log transformation (figure 5(d)) has changed the color spacing where the target area has a lighter value compared to its adjacent matrix. Again the contrast is emphasized in log transformation.
 
-![color-space-variation](/images/figure-5.png)
+![color-space-variation](/assets/figure-5.png)
 
 # Evaluation
 
@@ -84,17 +85,17 @@ There are two aspects to evaluate for this segmentation task. Firstly, it is imp
 Being able to detect small tumors is really important for early detecting, and that is why the second evaluation is being done.
 In order to investigate the correlation between segmentation area and accuracy, a validation data consisting of an equal number of categories is created. First, 100 samples from each category are chosen. Then three different transformations are applied on each image, generating three images. At last the original samples and generated ones are put together. 75% of this validation data has not been used to train any of the models. It is important to note that this validation data only has positive examples and when evaluating the only objective is to determine if images with larger segmentation areas are easier to segment.
 
-![color-space-variation](/images/figure-6.png)
+![color-space-variation](/assets/figure-6.png)
 
 A separate validation data is used for the overall performance of the models. This validation data is created by sampling 1000 negative images generated using transformations, and putting the previous the dataset together. Resulting in 4000 images with 50% positive and negative samples (balanced classes). Also, there are an equal number of images from different categories (see figure 7).
 
-![color-space-variation](/images/figure-7.png)
+![color-space-variation](/assets/figure-7.png)
 
 # Results
 
 Before analyzing the results it is important to formally state the hypothesis that is stated:
 
-![color-space-variation](/images/figure-8.png)
+![color-space-variation](/assets/figure-8.png)
 
 Table 2 shows the IOU metric for different models and categories. In all models, IOU increases as the pixels of interest increase. This confirms the hypothesis that the larger the area of the segmentation for images in a batch, the easier for the model to segment it. By observing table 2, it can be seen that for all the models:
 
@@ -102,17 +103,17 @@ Table 2 shows the IOU metric for different models and categories. In all models,
 
 The numbers for two different metrics are different but the accuracy pattern is the same in table 2 and table 3.
 
-![color-space-variation](/images/table-2.png)
+![color-space-variation](/assets/table-2.png)
 
 The most accurate model for IOU and dice (table 3) metrics is the log_balanced model. In this model the log transformation is used and the number of classes is equal. It is vital to point out that the base model which used the raw data (without any augmentation) has the lowest accuracy among other models that were trained on augmented data. This supports the idea that data augmentation increases accuracy. Seventy five percent of the validation data is not used for training by any of the models yet models trained with augmented data are far more robust than the base model in segmenting these images.
 
-![color-space-variation](/images/table-3.png)
+![color-space-variation](/assets/table-3.png)
 
 # Conclusion
 
 Running experiments using the same models with different training sets has shown that using different variations of data can increase accuracy. It also makes the model more robust to new data. Table 4 shows the IOU measure for the general validation data. Base model’s accuracy is really low compared to the other models. The most accurate model is when log and power law are used together. This is mainly because this training set is larger than other ones. Also log transformation seems to result in higher accuracies within the data. Also by running experiments on curated training sets, it was shown that samples with different tumor sizes should have close frequencies within the training data to avoid bias towards images with respect to their segmentation area.
 
-![color-space-variation](/images/table-4.png)
+![color-space-variation](/assets/table-4.png)
 
 # Discussion
 
