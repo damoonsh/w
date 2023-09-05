@@ -1,6 +1,7 @@
 ---
 title: "DeepDream Exploration"
 date: 2023-09-04
+layout: default
 ---
 
 # Introduction
