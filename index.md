@@ -1,6 +1,7 @@
 ---
 title: Welcome to my blog
 ---
-## Test
 
-I am **testing** to see if I can write with this thing.
+# Introduction
+
+I will write and coument my projects, compeition, and miscallenous coding material on here.
