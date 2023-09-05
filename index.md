@@ -2,6 +2,4 @@
 title: Projects
 ---
 
-# Introduction
-
-I will write and coument my projects, compeition, and miscallenous coding material on here.
+I will write and document my projects and competition on here.
