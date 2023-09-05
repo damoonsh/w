@@ -30,7 +30,7 @@ MRI images used for this paper are originally used in [4] and [7]. This dataset 
 
 MRI images have different shapes, patterns, and colors (figure 1). This can make it difficult for the model to find the patterns.
 
-![color-space-variation](/assets/figure-1.png)
+![color-space-variation](https://raw.githubusercontent.com/damoonsh/CPS843_final_project/main/images/figure-1.png)
 
 ## Phase Variation
 
