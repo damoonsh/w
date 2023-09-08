@@ -68,7 +68,6 @@ Given the imbalanced share of classes within the provided data, overfitting is i
 Data is being augmentated while being fed to the model. However, it would be helpfull to generate data seperately to increase the number of some classes. Data has been augmentated using the [albumentations](https://albumentations.ai/), the number of CBB (5%) were eight folded during this process.
 
 1. Some image transformers were intilialized to generate new images with deviations from the original image.
-
     ```python
     transform1 = A.Compose([
         A.Blur(blur_limit=3, always_apply=True),
@@ -124,7 +123,6 @@ Data is being augmentated while being fed to the model. However, it would be hel
         transform1, transform2, transform3, transform4, transform5, transform6, transform7, transform8
     ]
     ```
-
 2. Set of utilites were used to augmentate specific classes:
     - Given the break down dictionary, data was augmentated.
     - Using this stratedgy each ***.tfrec*** file had an equal number of classes
@@ -173,5 +171,4 @@ Data is being augmentated while being fed to the model. However, it would be hel
                     
                     writer.write(example)
     ```
-
     4. Augmentated data has been saved to [Kaggle Dataset](https://www.kaggle.com/damoonshahhosseini/cassavaaug) for further use in the future.
