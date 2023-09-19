@@ -24,7 +24,7 @@ Set 2 focuses on the deeper layer more than the shallower ones.
 Set 3 is the opposite of set 2.
 Set 4 is a combination in which all the weights are high, this set is used so it can be compared with the first set.
 
-![Alt Text](../IM_2_W1_S.gif)
+![Alt Text](https://github.com/damoonsh/w/blob/main/IM_2_W1_S.gif?raw=true)
 
 # Similarities
 DeepDream algorithms is using ResNet and it is optimizing the image in a way that transforms the shapes to what the ResNet layers perceive the image to contain. At each iteration certain features in the image are changed to look more like what ResNet is trained on. As an example a plan part of the image such as sky will tend to become more distorted as the model progresses. This happens because shallow layers are sensitive to subtle color changes and strokes. These subtleties will be sharpened to show the gap and it looks as if the model is on a drug and can see the sky properly. The difference between this part of the image is mostly similar across different weightings given that there is not much in that part of the image.
