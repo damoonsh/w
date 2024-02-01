@@ -67,9 +67,9 @@ Given the imbalanced share of classes within the provided data, overfitting is i
 ## Data Augmentation
 Data is being augmentated while being fed to the model. However, it would be helpfull to generate data seperately to increase the number of some classes. Data has been augmentated using the [albumentations](https://albumentations.ai/), the number of CBB (5%) were eight folded during this process.
 
-1. Some image transformers were intilialized to generate new images with deviations from the original image.
+[1] Some image transformers were intilialized to generate new images with deviations from the original image.
     
-    ```python
+```python
     transform1 = A.Compose([
         A.Blur(blur_limit=3, always_apply=True),
         A.HorizontalFlip(always_apply=True)
@@ -123,22 +123,24 @@ Data is being augmentated while being fed to the model. However, it would be hel
     transformers = [
         transform1, transform2, transform3, transform4, transform5, transform6, transform7, transform8
     ]
-    ```
-2. Set of utilites were used to augmentate specific classes:
+```
+
+[2] Set of utilites were used to augmentate specific classes:
     - Given the break down dictionary, data was augmentated.
     - Using this stratedgy each ***.tfrec*** file had an equal number of classes
-    ```python
-    def get_aug_df(iter_num, label_quantity={"0": 25, "1": 50, "2": 200, "3": 200, "4": 200}):
+```python
+def get_aug_df(iter_num, label_quantity={"0": 25, "1": 50, "2": 200, "3": 200, "4": 200}):
         
-        aug_df = pd.concat([train[train['label'] == int(label)].iloc[q*(iter_num-1):q*(iter_num)] 
+    aug_df = pd.concat([train[train['label'] == int(label)].iloc[q*(iter_num-1):q*(iter_num)] 
                             for label, q in label_quantity.items()]
                         ).sample(frac=1)
 
-        aug_df.reset_index(drop=True, inplace=True)
+    aug_df.reset_index(drop=True, inplace=True)
         
-        return aug_df
-    ```
-3. Then the actualt augmentation happens by randomly assing the transformers to the images:
+    return aug_df
+```
+
+[3] Then the actualt augmentation happens by randomly assing the transformers to the images:
     - Underrepresented classes will have more transformers assigned to them.
     - Default dictionary for augmentation:
         - 25 label 0's are chosen and eight folded
@@ -172,4 +174,5 @@ Data is being augmentated while being fed to the model. However, it would be hel
                     
                     writer.write(example)
 ```
-    4. Augmentated data has been saved to [Kaggle Dataset](https://www.kaggle.com/damoonshahhosseini/cassavaaug) for further use in the future.
+
+[4] Augmentated data has been saved to [Kaggle Dataset](https://www.kaggle.com/damoonshahhosseini/cassavaaug) for further use in the future.
