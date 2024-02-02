@@ -73,7 +73,7 @@ Given the imbalanced share of classes within the provided data, overfitting is i
 
 Data is being augmentated while being fed to the model. However, it would be helpfull to generate data seperately to increase the number of some classes. Data has been augmentated using the [albumentations](https://albumentations.ai/), the number of CBB (5%) were eight folded during this process.
 
-[1] Some image transformers were intilialized to generate new images with deviations from the original image.
+Some image transformers were intilialized to generate new images with deviations from the original image.
 
 ```python
     transform1 = A.Compose([
@@ -131,7 +131,7 @@ Data is being augmentated while being fed to the model. However, it would be hel
     ]
 ```
 
-[2] Set of utilites were used to augmentate specific classes: - Given the break down dictionary, data was augmentated. - Using this stratedgy each **_.tfrec_** file had an equal number of classes
+Set of utilites were used to augmentate specific classes: - Given the break down dictionary, data was augmentated. - Using this stratedgy each **_.tfrec_** file had an equal number of classes
 
 ```python
 def get_aug_df(iter_num, label_quantity={"0": 25, "1": 50, "2": 200, "3": 200, "4": 200}):
@@ -145,7 +145,7 @@ def get_aug_df(iter_num, label_quantity={"0": 25, "1": 50, "2": 200, "3": 200, "
     return aug_df
 ```
 
-[3] Then the actualt augmentation happens by randomly assing the transformers to the images: - Underrepresented classes will have more transformers assigned to them. - Default dictionary for augmentation: - 25 label 0's are chosen and eight folded - 50 label 1's chosen and four folded - 200 label 2,3,4's are chosen and transformed only once
+Then the actualt augmentation happens by randomly assing the transformers to the images: - Underrepresented classes will have more transformers assigned to them. - Default dictionary for augmentation: - 25 label 0's are chosen and eight folded - 50 label 1's chosen and four folded - 200 label 2,3,4's are chosen and transformed only once
 
 ```python
     def augmentate(df, tfrec_name, transformers=transformers):
