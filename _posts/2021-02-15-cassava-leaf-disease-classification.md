@@ -75,7 +75,7 @@ Data is being augmentated while being fed to the model. However, it would be hel
 
 Some image transformers were intilialized to generate new images with deviations from the original image.
 
-```python
+```
     transform1 = A.Compose([
         A.Blur(blur_limit=3, always_apply=True),
         A.HorizontalFlip(always_apply=True)
