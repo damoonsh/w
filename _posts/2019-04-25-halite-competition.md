@@ -11,9 +11,9 @@ date: 2019-04-25
 
   </div>
   <div style="flex: 1; min-width: 300px;">
-    <figure style="text-align: center;">
-      <img src='https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F3258%2F73a73a0b4a807a7a9e674a40c55f7396%2Fhalite.gif?generation=1594994852379393&alt=media' style='width: auto; height: 30%;'/>
-      <figcaption>Example of halite run</figcaption>
+    <figure style="text-align: center; padding-left: 5px;">
+      <img src='https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F3258%2F73a73a0b4a807a7a9e674a40c55f7396%2Fhalite.gif?generation=1594994852379393&alt=media' style='width: auto; height: 30%;  '/>
+      <figcaption>Example of halite run/environment</figcaption>
     </figure>
   </div>
 </div>
