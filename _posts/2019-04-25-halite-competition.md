@@ -11,16 +11,26 @@ date: 2019-04-25
 
   </div>
   <div style="flex: 1; min-width: 300px;">
-    <figure style="text-align: center; padding-left: 5px;">
+    <figure style="text-align: center; padding-leftP: 5px;">
       <img src='https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F3258%2F73a73a0b4a807a7a9e674a40c55f7396%2Fhalite.gif?generation=1594994852379393&alt=media' style='width: auto; height: 30%;  '/>
-      <figcaption>Example of halite run/environment</figcaption>
+      <figcaption> <b><i> Example of halite run/environment </i> </b></figcaption>
     </figure>
   </div>
 </div>
 
-<p> To drive these decisions, I developed a Q-function that evaluates the potential reward of each action based on multiple factors, such as the ship’s cargo, the player’s accumulated halite, and the halite present in each cell. This Q-function essentially allowed the agent to consider the state of its surroundings and weigh the outcomes of each action. By doing so, it could select moves that were not only optimal for the current situation but also aligned with a long-term strategy. </p>
+<p> The integral part of the competition is to choose actions that will maximize the long-term score. I developed evaluation function to estimate the action-reward and act accordingly. The potential reward of each action based on multiple factors, such as the ship’s cargo, the player’s accumulated halite, and the halite present in each cell. The estimation is gets complicated by recursively looking a few time steps ahead so a series of possible actions are considered at once to avoid short-term "greedy" wrong actions. This process is speculative given that the potential changes in the state of other objects in the environment should be taken into consideration. </p>
 
-<p> The ability to adapt strategies in real-time was crucial, as the agent encountered constantly shifting scenarios. Through the Q-function, the agent could flexibly assess each situation and adjust its actions to maximize rewards effectively. Participating in this competition was a fantastic opportunity to apply reinforcement learning principles and hone my problem-solving skills in a complex, ever-changing environment. The Halite competition not only reinforced my knowledge but also enhanced my appreciation for the nuanced decision-making that is core to effective AI. </p>
+$$\sigma(s, a) = \sum_{t=0}^{\infty} \gamma^t r(s_t, a_t)$$
+
+where:
+
+- s is the state
+- a is the action
+- \( \gamma \) is the discount factor
+- \( r(s_t, a_t) \) is the reward received at time step \( t \)
+
+
+<p> The ability to adapt strategies in real-time was crucial, as the agent encountered constantly shifting scenarios where the estimates made in previous steps are not even applicable. Through the Q-function, the agent could flexibly assess each situation and adjust its actions to maximize rewards effectively. Participating in this competition was a fantastic opportunity to apply reinforcement learning principles and hone my problem-solving skills in a complex, ever-changing environment. The Halite competition not only reinforced my knowledge but also enhanced my appreciation for the nuanced decision-making that is core to effective AI. </p>
 
 # Summary of the Code Description
 The DecisionShip class is designed to determine the next move for a ship in a reinforcement learning environment. It takes into account various factors such as the current state of the board, the ship's position, and the step in the simulation. The class initializes with properties like the player's current state, the ship's cargo, and its position. It defines possible moves, weights for these moves, and the closest shipyard. The class uses hyperparameters that change based on the current step in the simulation to influence the decision-making process. The main method, determine, calculates the weights for different moves, applies any eliminations, and selects the move with the highest weight that hasn't been eliminated. If no move is chosen, it defaults to mining.
