@@ -20,15 +20,6 @@ date: 2019-04-25
 
 <p> The integral part of the competition is to choose actions that will maximize the long-term score. I developed evaluation function to estimate the action-reward and act accordingly. The potential reward of each action based on multiple factors, such as the ship’s cargo, the player’s accumulated halite, and the halite present in each cell. The estimation is gets complicated by recursively looking a few time steps ahead so a series of possible actions are considered at once to avoid short-term "greedy" wrong actions. This process is speculative given that the potential changes in the state of other objects in the environment should be taken into consideration. </p>
 
-$$\sigma(s, a) = \sum_{t=0}^{\infty} \gamma^t r(s_t, a_t)$$
-
-where:
-
-- s is the state
-- a is the action
-- \( \gamma \) is the discount factor
-- \( r(s_t, a_t) \) is the reward received at time step \( t \)
-
 
 <p> The ability to adapt strategies in real-time was crucial, as the agent encountered constantly shifting scenarios where the estimates made in previous steps are not even applicable. Through the Q-function, the agent could flexibly assess each situation and adjust its actions to maximize rewards effectively. Participating in this competition was a fantastic opportunity to apply reinforcement learning principles and hone my problem-solving skills in a complex, ever-changing environment. The Halite competition not only reinforced my knowledge but also enhanced my appreciation for the nuanced decision-making that is core to effective AI. </p>
 

@@ -1,5 +1,5 @@
 ---
-title: "DeepDream algorithm: How does it works? What does it do?"
+title: "DeepDream algorithm: How does it work? What does it do?"
 date: 2023-09-04
 ---
 

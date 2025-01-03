@@ -1,0 +1,16 @@
+---
+title: "Predicting post-HCT Survival"
+date: 2025-01-01
+---
+
+# Context
+
+
+# Modelling
+
+## Sanity Check
+
+I used the most basic models possible to come up with a baseline for the model.
+
+## Understanding the loss function
+
