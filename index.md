@@ -2,4 +2,4 @@
 title: Projects
 ---
 
-I will write and document my projects and competition on here.
+I use this space to write about the projects or ideas that interest me.
