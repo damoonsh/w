@@ -11,7 +11,17 @@ Amid this growing interest in MoE models, DeepSeek has emerged as a notable play
 
 The surge in interest around DeepSeek R1 and V3 underscores the potential of MoE models to address some of the most pressing challenges in AI, from scaling to generalization. As the field continues to evolve, these models are likely to play a pivotal role in shaping the future of AI research and applications, offering a glimpse into the next generation of intelligent systems.
 
-# MOE effect on MNIST
+# Setup
+I am using the Digit Recognizer [competition on Kaggle](https://www.kaggle.com/competitions/digit-recognizer) to get a public score for the models. The goal is to start from a minimal base model and add MOE for the linear part and the CNN part and collectively comparing them.
+
+# Sanity Check
+In order to have a benchmark, I first use a very simple architecture. 
+Using a simple CNN in 100 epochs, it is possible to achieve 0.98407 accuracy. 
+
+<img src='https://raw.githubusercontent.com/damoonsh/MOE_MNIST/refs/heads/main/img/bench_arch.png'/>
+
+
+## MOE on classification
 
 | Model |  Hidden Size  |  Training accuracy | Public Score | Score Difference |
 |----------------|----------------|----------|-------------------|-------| 
