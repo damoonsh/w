@@ -29,3 +29,39 @@ Using a simple CNN in 100 epochs, it is possible to achieve 0.98407 accuracy.
 | MOE(2,5)  | 64 | 99.28   | 98.21   | 1.07 |
 | MOE(3,5)  | 64 | 99.63    | 98.76 | 0.87 |
 | MOE(6,10) | 16 | 99.06    | 97.99  | 1.07 |
+
+# Routing Collapse
+
+One common challenge with MoE architectures is "routing collapse". The "route" refers to the selection process of which expert to use for a given input where the model falls into a pattern of only using a small subset of experts. This happens because:
+
+1. Early in training, some experts may perform slightly better by chance
+2. These better-performing experts get selected more frequently
+3. With more practice, these experts improve further, creating a feedback loop
+4. Other experts become neglected and never improve
+
+Image below shows the routing collapse for the two MoEs.
+<img src='https://raw.githubusercontent.com/damoonsh/MOE_MNIST/refs/heads/main/img/expert_without_load_loss.png'/>
+
+### Load Balancing Solutions
+
+To prevent routing collapse, we implement three types of losses that were introduced in various MoE research:
+
+1. Diversity Loss: Encourages the gating network to use all experts by maximizing the entropy
+   of expert selection probabilities
+   [Shazeer et al., "Outrageously Large Neural Networks" (2017)](https://arxiv.org/abs/1701.06538)
+
+2. Importance Loss: Ensures each expert handles a similar total amount of input across the batch
+   by penalizing deviations from the mean usage
+   [Lepikhin et al., "GShard: Scaling Giant Models with Conditional Computation" (2020)](https://arxiv.org/abs/2006.16668)
+
+3. Overflow Loss: Prevents individual experts from being overloaded by penalizing usage above
+   a specified capacity threshold
+   [Fedus et al., "Switch Transformers" (2021)](https://arxiv.org/abs/2101.03961)
+
+These losses are combined with the main classification loss during training to ensure balanced expert utilization.
+The combination of these techniques has proven effective in large-scale models like GShard and Switch Transformers.
+
+Addition of the load balance loss function stabilize model training as well as spreading the expert utilization.
+<img src='https://raw.githubusercontent.com/damoonsh/MOE_MNIST/refs/heads/main/img/expert_with_load_loss.png'/>
+
+
