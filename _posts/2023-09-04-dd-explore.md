@@ -1,6 +1,8 @@
 ---
 title: "DeepDream algorithm: How does it work? What does it do?"
 date: 2023-09-04
+tags: [GenAI]
+image: https://raw.githubusercontent.com/damoonsh/DeepDream-Exploration/main/images/overall_arch.png
 ---
 
 # Introduction
