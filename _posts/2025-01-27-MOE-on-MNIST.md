@@ -28,27 +28,6 @@ After training for 100 epochs, this basic CNN achieves an accuracy of 0.98407 on
 
 <img src='https://raw.githubusercontent.com/damoonsh/MOE_MNIST/refs/heads/main/img/bench_arch.png'/>
 
-# Shared Layer concept
-
-A key innovation in modern MoE architectures is the concept of shared layers. Unlike traditional MoE models where each expert operates independently, shared layers introduce common components that are used across all experts. This approach, pioneered in DeepSeek's architecture, helps to:
-
-1. Reduce model parameters by sharing common features across experts
-2. Improve training stability by providing a consistent base representation
-3. Enhance knowledge transfer between experts through shared components
-
-DeepSeek's implementation of shared layers, as described in their technical report, demonstrates that this approach can significantly improve model efficiency while maintaining or even improving performance. The shared layers act as a common foundation that all experts build upon, allowing for more specialized expert networks to focus on their specific tasks while leveraging shared knowledge.
-
-[DeepSeek Technical Report](https://deepseek.ai/blog/2024/01/17/technical-report-v3.html)
-
-## MOE on classification
-
-| Model     | Hidden Size | Training accuracy | Public Score | Score Difference |
-| --------- | ----------- | ----------------- | ------------ | ---------------- |
-| MOE(1,5)  | 64          | 98.86             | 97.98        | 0.88             |
-| MOE(2,5)  | 64          | 99.28             | 98.21        | 1.07             |
-| MOE(3,5)  | 64          | 99.63             | 98.76        | 0.87             |
-| MOE(6,10) | 16          | 99.06             | 97.99        | 1.07             |
-
 # Routing Collapse
 
 One common challenge with MoE architectures is "routing collapse". The "route" refers to the selection process of which expert to use for a given input where the model falls into a pattern of only using a small subset of experts. This happens because:
@@ -90,3 +69,28 @@ The combination of these techniques has proven effective in large-scale models l
       <figcaption> <b><i> Addition of the load balance loss function stabilize model training as well as spreading the expert utilization. </i> </b></figcaption>
     </figure>
   </div>
+
+
+# Shared Layer concept
+
+A key innovation in modern MoE architectures is the concept of shared layers. Unlike traditional MoE models where each expert operates independently, shared layers introduce common components that are used across all experts. This approach, pioneered in DeepSeek's architecture, helps to:
+
+1. Reduce model parameters by sharing common features across experts
+2. Improve training stability by providing a consistent base representation
+3. Enhance knowledge transfer between experts through shared components
+
+DeepSeek's implementation of shared layers, as described in their technical report, demonstrates that this approach can significantly improve model efficiency while maintaining or even improving performance. The shared layers act as a common foundation that all experts build upon, allowing for more specialized expert networks to focus on their specific tasks while leveraging shared knowledge.
+
+[DeepSeek Technical Report](https://deepseek.ai/blog/2024/01/17/technical-report-v3.html)
+
+## MOE on classification
+
+
+Without shared expert layer and 30 epoch training with only one Linear MoE:
+| Model     | Hidden Size | Training accuracy | Public Score | Score Difference |
+| --------- | ----------- | ----------------- | ------------ | ---------------- |
+| MOE(1,5)  | 64          | 98.86             | 97.98        | 0.88             |
+| MOE(2,5)  | 64          | 99.28             | 98.21        | 1.07             |
+| MOE(3,5)  | 64          | 99.63             | 98.76        | 0.87             |
+| MOE(6,10) | 16          | 99.06             | 97.99        | 1.07             |
+
