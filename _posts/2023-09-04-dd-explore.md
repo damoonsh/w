@@ -13,7 +13,7 @@ This is a personal project in which I have tried to understand the DeepDream gen
 
 # Overall architecture of Deep Learning
 
-Deep learning is the process of training deep neural networks to learn patterns of data. Neural networks are inspired by the workings of our brains, and each layer is similar to a neuron. Each neuron has at least one input and at least one output. A neural network is made up of the stacked neurons where the input of a neuron is the output of a preceding one. A neural network with too many layers is called deep. The first layers are referred to as shallow layers but as the number of preceding layers for a layer increases, they are referred to as deeper layers.
+Deep learning is the process of training deep neural networks to learn patterns of data. Neural networks are inspired by the workings of our brains, and each layer is similar to a neuron. Each neuron has at least one input and at least one output. A neural network is made up of the stacked neurons where the input of a neuron is the output of a preceding one. A neural network with too many layers is called "deep". The first layers are referred to as shallow layers but as the number of preceding layers for a layer increases, they are referred to as deeper layers.
 
 <img src='https://raw.githubusercontent.com/damoonsh/DeepDream-Exploration/main/images/overall_arch.png'/>
 
@@ -21,27 +21,20 @@ Deep learning is the process of training deep neural networks to learn patterns 
 
 The goal of the algorithm is to exaggerate what the layers are seeing in the picture to be able to analyze their different properties. Hence, in the training process the input image is being updated based on the gradients of feature extractors. Instead of updating the weights of the models, the image is updated and after each iteration, the features detected by layers are imposed upon the image. In other words, the image is updated to resemble what the layers are extracting.
 
-<div style="display: flex; flex-wrap: wrap; align-items: flex-start;">
-  <div style="flex: 1;">
-    <p> DeepDream algorithm follows a generative approach: there is no labeled data, and the model's output is similar to the input. Layers from ResNet50 are used to extract features: mixed4, mixed5, mixed6, and mixed7 (name of the layers). In each iteration of training, a forward pass through the network will yield certain features, and the loss is calculated based on the extracted features from each layer. At the end of the iteration the input image is updated using the gradients for that loss. This process changes the input image so the shapes identified by each layer becomes more illusive after each iteration. This process informs what the network layers are actually picking up. Given that we are using multiple layers, there is going to be a correlation between what different layers are seeing given that each is influencing the input as the model iterates.</p>
 
-<p> An important component is the associated weight for each of the feature layers. Each layer has a different weight. This will cause the layer with a higher weight to influence the shapes within the image more than other layers. This weighting mechanism is at the heart of analysis. Changing the weights, and comparing the results we can reason about the features being captured at different levels.  </p>
+<p> DeepDream algorithm follows a generative approach: there is no labeled data, and the model's output is similar to the input. Layers from ResNet50 are used to extract features: mixed4, mixed5, mixed6, and mixed7 (name of the layers). In each iteration of training, a forward pass through the network will yield certain features, and the loss is calculated based on the extracted features from each layer. At the end of the iteration the input image is updated using the gradients for that loss. This process changes the input image so the shapes identified by each layer becomes more illusive after each iteration. This process informs what the network layers are actually picking up. Given that we are using multiple layers, there is going to be a correlation between what different layers are seeing given that each is influencing the input as the model iterates.</p>
 
-  </div>
-  <div style="flex: 1; min-width: 300px;">
-    <figure style="text-align: center;">
+<figure style="text-align: center;">
       <img src='https://github.com/damoonsh/DeepDream-Exploration/blob/main/gifs/IM_2_W1_S.gif?raw=true' style='width: auto; height: 30%; '/>
       <figcaption>DeepDream iterations </figcaption>
     </figure>
-  </div>
-</div>
 
-<div style="flex: 1; min-width: 300px;">
-    <figure style="text-align: center;">
-<img src='https://raw.githubusercontent.com/damoonsh/DeepDream-Exploration/main/images/algorithm.png'/>
-<figcaption> <b> One iteration of DeepDream algorithm </b> </figcaption>
+<p> An important component is the associated weight for each of the feature layers. Each layer has a different weight. This will cause the layer with a higher weight to influence the shapes within the image more than other layers. This weighting mechanism is at the heart of analysis. Changing the weights, and comparing the results we can reason about the features being captured at different levels.  </p>
+
+<figure style="text-align: center;">
+  <img src='https://raw.githubusercontent.com/damoonsh/DeepDream-Exploration/main/images/algorithm.png'/>
+  <figcaption> <b> One iteration of DeepDream algorithm </b> </figcaption>
 </figure>
-  </div>
   
 ## Loss function
 The loss function used for the algorithm is the average of the outputs from the feature layers. This metric signifies the sensitivity of the feature layers to the image. And when updating the model using this metric, these sensitivities are optimized so that the features can be seen more clearly.
@@ -81,6 +74,26 @@ The weights that emphasize more abstract geometric shapes begin to detect them e
     </figure>
   </div>
 
+Analyzing the Gif below helps visualize the "Algorithmic Logic" behind DeepDream. The painting is of waves crashing into rocks which in turn creates geometric shapes blending with different colourings. Taking a closer look: the model starts seeing Dog eyes within the rocks. It is as if the model is determined to see a "Dog" somewhere and the geometric shapes within the rocks is the perfect place to see one.
+
+<div style="flex: 1; min-width: 300px;">
+    <figure style="text-align: center;">
+      <img src='https://raw.githubusercontent.com/damoonsh/DeepDream-Exploration/refs/heads/main/gifs/IM_159_W4_S.gif' style='width: auto; height: 30%; '/>
+      <figcaption> Seeing dog faces in waves (weight set 4) </figcaption>
+    </figure>
+  </div>
+
+The Gif above used weight set 4 meaning that, abstract features were heavily subsidized in seeing a dog. How would it differ if the weighting favored simpler details? Gif below shows the process for weight set 1. The dog is not seen in the rocks immediately, in fact it is not seen in the rocks the way it used to. Since focusing on simple geometric features (straight lines or curves), the model blurs the sky more heavily and as it modifies the sand (bottom left), it starts to see small dog heads.
+
+<div style="flex: 1; min-width: 300px;">
+    <figure style="text-align: center;">
+      <img src='https://github.com/damoonsh/DeepDream-Exploration/blob/main/gifs/IM_159_W1_S.gif?raw=true' style='width: auto; height: 30%; '/>
+      <figcaption> Seeing dog faces in waves (weight set 1) </figcaption>
+    </figure>
+  </div>
+
+These two examples show how changing the weight shifts the model's logic and sequentially affects what the model sees.
+
 # Similar effects across different images
 DeepDream algorithm is using ResNet which is trained on pictures of dogs and cats. The algorithm optimizes the image in a way that transforms the shapes to what the ResNet layers perceive the image to contain. At each iteration certain features in the image are changed to look more like what ResNet is trained on. As an example: a plain part of the image such as sky will tend to become more distorted as the model progresses. I believe this happens because shallow layers are sensitive to subtle color changes and strokes. These subtleties will be sharpened to show the gap and it looks as if the model is on a drug and can see the sky properly. The difference between this part of the image is mostly similar across different weightings given that there is not much in that part of the image.
 
@@ -104,11 +117,13 @@ In the image, only one eye is painted but all the models are imaging the other e
 </figure>
   </div>
 
+
+
 # Possible applications
 
 If we have a small dataset, and want to augment data, can we utilize the model's ability to hallucinate to generate data with positive class? For the leaf disease prediction: what if the benign images were given to the model so that it could hallucinate the diseased versions of them?
 
-It is adding dogs to images, why can it not add other things and be used for the augmentation process.
+It is adding dogs to images, why can it not add other things and be used for the augmentation process. For instance, can we augment X-ray images by imaging early stage tumors? This has proven to be difficult since the model is not deterministic and navigate the latent space, a more discrete approach with a specialized pre-trained network might be doable.
 
 There are certain fields where the size of good quality data is small and makes it difficult to provide deep learning solutions. Medical field is one of these fields. Given a large amount of CT scans, a deep model will get a better accuracy however due to various logistic reasons, CT scan datasets are not as large to yield high results. Now what if the generative AI similar to deep dream could hallucinate and imagine what a normal CT scan would look like if there was a tumor present? It is seeing dogs where there are no dogs, in theory it could see a tumor in a benign CT scan. But again the problem is that the feature extractor base of the model should be trained on a large dataset of tumors to be able to imagine it, and as mentioned: the datasets in this field are not large enough.
 
