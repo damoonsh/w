@@ -2,8 +2,6 @@
 title: Projects
 ---
 
-<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/profile-picture.jpg" alt="Your Name" style="width: 150px; border-radius: 50%; float: left; margin-right: 15px;"> <!-- Example styling -->
-
 Interested in advanced algorithms within the realm of AI and underlying techstack that powers them. I use this space to share my notes and projects. The notes are usually an attempt for me to better understand a concept introduced in a research paper. The projects are my implementation of things I find interesting.
 
 Algorithms interested in:
