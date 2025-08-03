@@ -3,38 +3,99 @@ title: "Hierarchical Reasoning Model"
 date: 2025-08-02
 ---
 
-Paper: https://www.alphaxiv.org/abs/2506.21734 
-
-
 # Hierarchical Reasoning Model
+
+Paper: https://www.alphaxiv.org/abs/2506.21734 
 
 # Context
 
+## Abstract Reasoning Corpus (ARC)
 
-Thinking Fast, Thking Slow:
+This paper aims at solving ARC using minimal amount of computation with a new archtecture.
+
+[Thinking Fast, Thking Slow](https://www.amazon.ca/Thinking-Fast-Slow-Daniel-Kahneman/dp/0385676530/ref=sr_1_1?dib=eyJ2IjoiMSJ9.-A0A1M1omFejp_IgozA4EP-t1GVm1BQ5b-Fy4--sH2jlI4TkjH5jDyvsMB3QaPAWmCF8fXOUXeorzBGapyu2it_PQPmflA5bDZjX-53c4H18YuX2VsMXHhS8uW_w7evLbej2Za85-JUZQgwJ6jlg-YrHbJZ-6imVGBQ66MpfM1HgMxMjaPmFvhE_gyrI3Op5EaS7OJ32xEV12KFiEXVEOmGEy1aW1CSa9bD7_vBrEg8.Z5Dg9KuVJmWPXHz_m5w1mTEn1qFjLDwTbjmmHonIvIs&dib_tag=se&gad_source=1&hvadid=208395699259&hvdev=c&hvexpln=0&hvlocphy=9198282&hvnetw=g&hvocijid=11848890499679496705--&hvqmt=e&hvrand=11848890499679496705&hvtargid=kwd-300246672130&hydadcr=22462_9261645&keywords=thinking+fast+thinking+slow&mcid=19b38662bf3f3833bd2f70b228d7e847&qid=1754191073&s=books&sr=1-1):
 * Lots of research papers refer to this book
 * The book talks divides brain's thinking process into slow and fast
     * Fast: Fast, Automatic, Intuitive
     * Slow: Deloberate, effortful reasoning
 
 <figure style="text-align: center;">
-      <img src='https://github.com/damoonsh/DeepDream-Exploration/blob/main/gifs/IM_2_W1_S.gif?raw=true' style='width: auto; height: 30%; '/>
-      <figcaption>DeepDream iterations </figcaption>
+      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/slow_fast.gif' style='width: auto; height: 30%; '/>
+      <figcaption style="text-align: center;">Fast vs slow thinking </figcaption>
     </figure>
 
 
 # Introduction
 
 Previous reasoning models use CoT (Chain-of-Thought), downsides:
-- rittle task decomposition
-- extensive data requirements
-- high latency
+- Brittle task decomposition: Single misstep can break the chain
+- Extensive data requirements: Large training data
+- High latency: Generates loads of token; slowing down inference
+
+WHat are they offering: Latenet Reasoning
+- Language is for human communication and ideas/thoughts are compressed effectively without translating back to language
+- The model operates within its own hidden state
+
+Inspired by human brain
+- High-level (slow) part and low-level (fast) part interact
+- The low-level exectures ideas based on the global knowdlege stored in High-level
+- High-level gets feedback from low-level and adjusts
+- Hierarchy and multi-stage
+
+## Datasets
+<figure style="text-align: center;">
+      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez-data.png' style='width: auto; height: 30%; '/>
+      <figcaption style="text-align: center;">Datasets used for training/evaulation</figcaption>
+    </figure>
+
+
+## Result
+
+- Models being compared are general purpose
+- Not tested on ARC-3
+
+<figure style="text-align: center;">
+      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-reasoning-comparison.png' style='width: auto; height: 30%; '/>
+      <figcaption style="text-align: center;">Comparison for ARC-1,2, and Soduku (Figure 1 from paper)</figcaption>
+    </figure>
+
 
 # Method
 
-# Result
+## Data + Augmentations
 
-### 📊 ARC-AGI Performance Comparison (HRM vs. Baselines)
+1000 From each (ARC, Sudoku, Maze) +  ==≥ 3,831,994
+- ARC: transition/rotations/flips/color permutations
+- Soduku: used band and digits permuations
+- Maze: No change, raw data used
+
+## H-L combo
+
+- H-level updates after T steps of L-level
+    - When L-level reeaches local equilibrium
+- H-level's world-view changes; L-level resets -≥ new computation path
+- N (number of H update) x L (number of l updates) increase the reasoning depth
+
+<figure style="text-align: center;">
+      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez.png' style='width: auto; height: 30%; '/>
+      <figcaption style="text-align: center;">Hierarchical Reasonng process</figcaption>
+    </figure>
+
+## Memory footprint
+
+Backpropagation Through Time (BPTT) saves model parameters at each time step and backpropagates.
+    - Biological implausibility: Human brain does not do this
+    - 
+
+
+This approach is O(1): Constant memory; uses **one-step gradient approximation**::uses the first and last state of H and L level, intermediary steps as constants.
+    - Aligns with idea of local rule in brian
+    - Brain does not utilize all previous computations for learning
+
+
+# More Detailed Result
+
+### ARC-AGI Performance Comparison (HRM vs. Baselines)
 
 | Model | Size (Params) | ARC-AGI-1 (%) | ARC-AGI-2 (%) | Pretraining? | CoT Used? | Notes |
 |-------|---------------|---------------|---------------|-------------|----------|-------|
@@ -62,3 +123,11 @@ Previous reasoning models use CoT (Chain-of-Thought), downsides:
 - **Architecture > Scale**: HRM proves that **better internal reasoning design** can beat **scaling alone** — a shift from “bigger is better” to “deeper, structured computation wins.”
 
 This hierarchical view underscores HRM’s significance: **it achieves superior reasoning not by being larger or more data-hungry, but by thinking differently — deeply, internally, and adaptively.**
+
+
+# Related
+
+Resembles these:
+- VAEs, Diffusion
+- [Intuitive physics understanding emerges from self-supervised pretraining on natural videos](https://www.alphaxiv.org/abs/2502.11831)
+- [A Path Towards Autonomous Machine Intelligence](https://www.alphaxiv.org/abs/2306.02572)
