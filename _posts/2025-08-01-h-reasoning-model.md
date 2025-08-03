@@ -19,11 +19,10 @@ This paper aims at solving ARC using minimal amount of computation with a new ar
     * Fast: Fast, Automatic, Intuitive
     * Slow: Deloberate, effortful reasoning
 
-<figure style="text-align: center;">
-      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/slow_fast.gif' style='width: auto; height: 30%; '/>
-      <figcaption style="text-align: center;">Fast vs slow thinking </figcaption>
-    </figure>
-
+<figure style="margin: 0 auto; text-align: center;">
+    <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/slow_fast.gif' style='width: auto; height: 30%; '/>
+    <figcaption>Hierarchical Reasoning process</figcaption>
+</figure>
 
 # Introduction
 
@@ -43,11 +42,10 @@ Inspired by human brain
 - Hierarchy and multi-stage
 
 ## Datasets
-<figure style="text-align: center;">
-      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez-data.png' style='width: auto; height: 30%; '/>
-      <figcaption style="text-align: center;">Datasets used for training/evaulation</figcaption>
-    </figure>
-
+<figure style="margin: 0 auto; text-align: center;">
+    <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez-data.png' style='width: auto; height: 30%; '/>
+    <figcaption>Hierarchical Reasoning process</figcaption>
+</figure>
 
 ## Result
 
@@ -76,10 +74,10 @@ Inspired by human brain
 - H-level's world-view changes; L-level resets -≥ new computation path
 - N (number of H update) x L (number of l updates) increase the reasoning depth
 
-<figure style="text-align: center;">
-      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez.png' style='width: 48%; height: 50%; '/>
-      <figcaption style="text-align: center;">Hierarchical Reasonng process</figcaption>
-    </figure>
+<figure style="margin: 0 auto; text-align: center;">
+    <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez.png' style='max-width: 48%; height: auto;'/>
+    <figcaption>Hierarchical Reasoning process</figcaption>
+</figure>
 
 ## Memory footprint
 
