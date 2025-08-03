@@ -77,7 +77,7 @@ Inspired by human brain
 - N (number of H update) x L (number of l updates) increase the reasoning depth
 
 <figure style="text-align: center;">
-      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez.png' style='width: auto; height: 30%; '/>
+      <img src='https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/h-rez.png' style='width: 48%; height: 50%; '/>
       <figcaption style="text-align: center;">Hierarchical Reasonng process</figcaption>
     </figure>
 
