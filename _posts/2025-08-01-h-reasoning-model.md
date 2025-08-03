@@ -84,13 +84,12 @@ Inspired by human brain
 ## Memory footprint
 
 Backpropagation Through Time (BPTT) saves model parameters at each time step and backpropagates.
-    - Biological implausibility: Human brain does not do this
-    - 
+- Biological implausibility: Human brain does not do this 
 
 
 This approach is O(1): Constant memory; uses **one-step gradient approximation**::uses the first and last state of H and L level, intermediary steps as constants.
-    - Aligns with idea of local rule in brian
-    - Brain does not utilize all previous computations for learning
+- Aligns with idea of local rule in brian
+- Brain does not utilize all previous computations for learning
 
 
 # More Detailed Result
