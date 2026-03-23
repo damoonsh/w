@@ -1,5 +1,7 @@
 theme: minima
 title: Damoon Shahhosseini
+baseurl: "/w"
+url: "https://damoonsh.github.io"
 
 plugins:
   - jekyll-mermaid
