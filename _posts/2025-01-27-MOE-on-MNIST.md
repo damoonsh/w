@@ -1,6 +1,8 @@
 ---
 title: "MOE on MNIST"
 date: 2025-01-27
+image: https://raw.githubusercontent.com/damoonsh/MOE_MNIST/refs/heads/main/img/expert_without_load_loss.png
+description: "Implements Mixture of Experts on MNIST; studies routing collapse and load balancing."
 ---
 
 # Introduction

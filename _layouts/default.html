@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+
+  {%- include head.html -%}
+
+  <body>
+
+    {%- include header.html -%}
+
+    <!-- Theme toggle: 💡 light · 🌑 dark · ☕ brown -->
+    <div class="theme-toggle" role="group" aria-label="Choose colour theme">
+      <button class="theme-btn" id="btn-light"  title="Light"  onclick="setTheme('light')">💡</button>
+      <button class="theme-btn" id="btn-dark"   title="Dark"   onclick="setTheme('dark')">🌑</button>
+      <button class="theme-btn" id="btn-brown"  title="Brown"  onclick="setTheme('brown')">☕</button>
+    </div>
+
+    <script>
+      (function () {
+        var THEMES = ['light', 'dark', 'brown'];
+        var saved = localStorage.getItem('theme') || 'light';
+
+        function setTheme(t) {
+          if (!THEMES.includes(t)) t = 'light';
+          document.documentElement.setAttribute('data-theme', t);
+          localStorage.setItem('theme', t);
+          THEMES.forEach(function(name) {
+            var btn = document.getElementById('btn-' + name);
+            if (btn) btn.classList.toggle('active', name === t);
+          });
+        }
+
+        // Expose globally so onclick="" works
+        window.setTheme = setTheme;
+
+        // Apply saved theme immediately (before paint)
+        setTheme(saved);
+      })();
+    </script>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        {{ content }}
+      </div>
+    </main>
+
+    {%- include footer.html -%}
+
+    <!-- MathJax 3 – renders $...$ inline and $$...$$ display math -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath:  [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+  </body>
+
+</html>

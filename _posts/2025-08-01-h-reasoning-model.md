@@ -1,6 +1,8 @@
 ---
 title: "Hierarchical Reasoning Model"
 date: 2025-08-02
+image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/slow_fast.gif
+description: "27M-parameter HRM uses slow/fast latent reasoning to outperform CoT models on ARC-AGI."
 ---
 
 # Hierarchical Reasoning Model

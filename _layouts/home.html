@@ -1,0 +1,48 @@
+---
+layout: default
+---
+<div class="home">
+  {%- if page.title -%}
+    <h1 class="page-heading">{{ page.title }}</h1>
+  {%- endif -%}
+
+  <div class="home-intro">
+    {{ content }}
+  </div>
+
+  {%- if site.posts.size > 0 -%}
+    <h2 class="posts-heading">Posts</h2>
+    <div class="post-grid">
+      {%- for post in site.posts -%}
+        <article class="post-card">
+          <a href="{{ post.url | prepend: site.baseurl }}" class="post-card__link">
+            <div class="post-card__image">
+              {%- if post.image -%}
+                <img src="{{ post.image }}" alt="{{ post.title | escape }}" loading="lazy" />
+              {%- else -%}
+                <div class="post-card__placeholder post-card__placeholder--{{ forloop.index | modulo: 5 }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5L14.5 3Z"/>
+                    <polyline points="14 3 14 9 20 9"/>
+                    <line x1="8" y1="13" x2="16" y2="13"/>
+                    <line x1="8" y1="17" x2="16" y2="17"/>
+                    <line x1="8" y1="9" x2="10" y2="9"/>
+                  </svg>
+                </div>
+              {%- endif -%}
+            </div>
+            <div class="post-card__body">
+              <time class="post-card__date" datetime="{{ post.date | date_to_xmlschema }}">
+                {{ post.date | date: "%b %-d, %Y" }}
+              </time>
+              <h2 class="post-card__title">{{ post.title | escape }}</h2>
+              {%- if post.description -%}
+                <p class="post-card__description">{{ post.description }}</p>
+              {%- endif -%}
+            </div>
+          </a>
+        </article>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</div>

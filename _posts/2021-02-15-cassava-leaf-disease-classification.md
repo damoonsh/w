@@ -1,3 +1,10 @@
+---
+title: "Cassava Leaf Disease Classification"
+date: 2021-02-15
+image: https://raw.githubusercontent.com/damoonsh/Cassava-Leaf-Disease-Classification/main/img/class-breakdown.png
+description: "TPU-accelerated image classifier detects viral diseases in cassava plants across five categories."
+---
+
 # [Cassava Leaf Disease Classification](Cassava-Leaf-Disease-Classification) Competition
 
 This repository contains the code of my attempt to compete in this competition.

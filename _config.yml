@@ -3,3 +3,11 @@ title: Damoon Shahhosseini
 
 plugins:
   - jekyll-mermaid
+
+# Automatically apply layout: post to every post
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"

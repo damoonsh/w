@@ -2,7 +2,8 @@
 title: "DeepDream algorithm: How does it work? What does it do?"
 date: 2023-09-04
 tags: [GenAI]
-image: https://raw.githubusercontent.com/damoonsh/DeepDream-Exploration/main/images/overall_arch.png
+image: https://github.com/damoonsh/DeepDream-Exploration/blob/main/gifs/IM_2_W_all.gif?raw=true
+description: "Explores Google's DeepDream to understand what neural network layers detect in images."
 ---
 
 # Introduction

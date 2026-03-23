@@ -1,6 +1,8 @@
 ---
 title: "Halite Competition"
 date: 2019-04-25
+image: https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F3258%2F73a73a0b4a807a7a9e674a40c55f7396%2Fhalite.gif?generation=1594994852379393&alt=media
+description: "Reinforcement learning agent mines halite using a Q-function to evaluate multi-step actions."
 ---
 
 # Introduction and Context

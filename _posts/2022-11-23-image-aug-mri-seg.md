@@ -1,6 +1,8 @@
 ---
 title: "The Role of Image Augmentation on Brain MRI Segmentation Accuracy"
 date: 2022-11-23
+image: https://raw.githubusercontent.com/damoonsh/CPS843_final_project/main/images/figure-1.png
+description: "Image augmentation improves U-Net brain tumor segmentation accuracy and reduces size-based bias."
 ---
 
 #### Guide to the project

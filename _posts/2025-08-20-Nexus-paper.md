@@ -1,6 +1,8 @@
 ---
 title: "Nexus: Specialization meets Adaptability for Efficiently Training Mixture of Experts"
 date: 2025-08-20
+image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nexus/nexus.png
+description: "Nexus merges specialist LLMs into a sparse MoE using domain-embedding dynamic routing."
 ---
 
 These are notes for this [paper](https://www.alphaxiv.org/abs/2408.15901).
