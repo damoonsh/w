@@ -448,14 +448,15 @@ code {
     align-items: start;
   }
 
-  /* Left-align so the TOC sits near the viewport edge instead of a wide centered gutter */
+  /* Full-width row: TOC + article use the viewport; only edge padding caps the sides */
   .page-content .wrapper:has(.post-with-toc) {
     margin-left: 0;
-    margin-right: auto;
-    max-width: -webkit-calc(65rem - (30px * 2));
-    max-width: calc(65rem - (30px * 2));
+    margin-right: 0;
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
     padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
-    padding-right: 30px;
+    padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
   }
 
   .post-toc:not([hidden]) {
