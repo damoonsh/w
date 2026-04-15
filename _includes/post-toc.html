@@ -1,0 +1,90 @@
+<aside class="post-toc" id="post-toc-aside" aria-label="On this page" hidden>
+  {% comment %} <p class="post-toc__heading">On this page</p> {% endcomment %}
+  <nav class="post-toc__nav" id="post-toc-nav"></nav>
+</aside>
+<script>
+/* Runs after .post-content exists: this include sits above the article in the DOM. */
+function postTocInit() {
+  var content = document.querySelector('.post-content');
+  var aside = document.getElementById('post-toc-aside');
+  var nav = document.getElementById('post-toc-nav');
+  if (!content || !aside || !nav) return;
+
+  var headings = content.querySelectorAll('h1, h2, h3');
+  if (!headings.length) return;
+
+  function slugify(text) {
+    var s = String(text).trim().toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9\-]/gi, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    return s;
+  }
+
+  var usedIds = {};
+  function ensureId(el, index) {
+    if (el.id) {
+      usedIds[el.id] = true;
+      return el.id;
+    }
+    var base = slugify(el.textContent || '') || 'section';
+    var id = base;
+    var n = 2;
+    while (usedIds[id] || document.getElementById(id)) {
+      id = base + '-' + (n++);
+    }
+    usedIds[id] = true;
+    el.id = id;
+    return id;
+  }
+
+  var ol = document.createElement('ol');
+  ol.className = 'post-toc__list';
+
+  headings.forEach(function (h, index) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    ensureId(h, index);
+    var li = document.createElement('li');
+    li.className = 'post-toc__item post-toc__depth-' + level;
+    var a = document.createElement('a');
+    a.className = 'post-toc__link';
+    a.href = '#' + h.id;
+    a.textContent = (h.textContent || '').trim();
+    li.appendChild(a);
+    ol.appendChild(li);
+  });
+
+  nav.appendChild(ol);
+  aside.removeAttribute('hidden');
+
+  var links = ol.querySelectorAll('.post-toc__link');
+  function updateActive() {
+    var active = null;
+    var top = 96;
+    headings.forEach(function (h) {
+      var rect = h.getBoundingClientRect();
+      if (rect.top <= top) active = h;
+    });
+    links.forEach(function (l) { l.classList.remove('is-active'); });
+    if (active) {
+      var target = '#' + active.id;
+      for (var i = 0; i < links.length; i++) {
+        if (links[i].getAttribute('href') === target) {
+          links[i].classList.add('is-active');
+          break;
+        }
+      }
+    }
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  window.addEventListener('resize', updateActive, { passive: true });
+  updateActive();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', postTocInit);
+} else {
+  postTocInit();
+}
+</script>
