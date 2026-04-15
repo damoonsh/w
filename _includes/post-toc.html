@@ -1,5 +1,5 @@
 <aside class="post-toc" id="post-toc-aside" aria-label="On this page" hidden>
-  {% comment %} <p class="post-toc__heading">On this page</p> {% endcomment %}
+  <p class="post-toc__heading">On this page</p>
   <nav class="post-toc__nav" id="post-toc-nav"></nav>
 </aside>
 <script>
@@ -39,8 +39,9 @@ function postTocInit() {
     return id;
   }
 
-  var ol = document.createElement('ol');
-  ol.className = 'post-toc__list';
+  /* <ul> avoids default <ol> numbering if theme CSS wins over our list reset */
+  var listEl = document.createElement('ul');
+  listEl.className = 'post-toc__list';
 
   headings.forEach(function (h, index) {
     var level = parseInt(h.tagName.slice(1), 10);
@@ -52,13 +53,13 @@ function postTocInit() {
     a.href = '#' + h.id;
     a.textContent = (h.textContent || '').trim();
     li.appendChild(a);
-    ol.appendChild(li);
+    listEl.appendChild(li);
   });
 
-  nav.appendChild(ol);
+  nav.appendChild(listEl);
   aside.removeAttribute('hidden');
 
-  var links = ol.querySelectorAll('.post-toc__link');
+  var links = listEl.querySelectorAll('.post-toc__link');
   function updateActive() {
     var active = null;
     var top = 96;

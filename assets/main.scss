@@ -396,8 +396,11 @@ code {
 
 .post-toc__list {
   list-style: none;
+  list-style-type: none;
   margin: 0;
   padding: 0;
+  padding-inline-start: 0;
+  margin-inline-start: 0;
 }
 
 .post-toc__item {
@@ -437,7 +440,7 @@ code {
   padding-left: 0.85rem;
 }
 
-@media screen and (min-width: 64rem) {
+@media screen and (min-width: 56rem) {
   .post-with-toc {
     display: grid;
     grid-template-columns: 9.25rem minmax(0, 1fr);
