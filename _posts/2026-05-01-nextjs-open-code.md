@@ -12,6 +12,8 @@ description: "Benchmarking recent model releases on a DGX Spark with the Next.js
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/cmd_dist_122b_super.png" alt="Command distribution (122B Super)" style="width: auto; height: 30%;"/>
 
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/cmd_dist_gemma4_dense.png" alt="Command distribution (Gemma 4 dense)" style="width: auto; height: 30%;"/>
+
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/cmd_dist_nano_cascade.png" alt="Command distribution (Nano Cascade)" style="width: auto; height: 30%;"/>
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/docs_agents_edit_compliance_qwen.png" alt="Docs agents edit compliance (Qwen)" style="width: auto; height: 30%;"/>
@@ -26,17 +28,41 @@ description: "Benchmarking recent model releases on a DGX Spark with the Next.js
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/qwen_reward_by_size_hint_bars.png" alt="Qwen reward by size (hint bars)" style="width: auto; height: 30%;"/>
 
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_focus_cross_llm_combo_full.png" alt="RTP focus cross-LLM combo full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_focus_lineup_reason_turn_wc_base_full.png" alt="RTP focus lineup reason turn WC base full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_gemma4_combo_full.png" alt="RTP Gemma 4 combo full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_mix_reason_rollout_sum_wc_cross_llm_full.png" alt="RTP mix reason rollout sum WC cross-LLM full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_mix_reason_turn_wc_cross_llm_full.png" alt="RTP mix reason turn WC cross-LLM full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_nvidia_combo_full.png" alt="RTP NVIDIA combo full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_nvidia_combo_reason_rollout_sum_wc_full.png" alt="RTP NVIDIA combo reason rollout sum WC full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_nvidia_combo_reason_turn_wc_full.png" alt="RTP NVIDIA combo reason turn WC full" style="width: auto; height: 30%;"/>
+
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_qwen_combo_27_pair.png" alt="RTP Qwen combo 27 pair" style="width: auto; height: 30%;"/>
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_qwen_combo_35_pair.png" alt="RTP Qwen combo 35 pair" style="width: auto; height: 30%;"/>
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_qwen_combo_full.png" alt="RTP Qwen combo full" style="width: auto; height: 30%;"/>
 
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_qwen_combo_reason_rollout_sum_wc_full.png" alt="RTP Qwen combo reason rollout sum WC full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_qwen_combo_reason_turn_wc_full.png" alt="RTP Qwen combo reason turn WC full" style="width: auto; height: 30%;"/>
+
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_qwen_facets_reward_time_three_panel.png" alt="RTP Qwen facets: reward and time (three panel)" style="width: auto; height: 30%;"/>
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_scatter_122b_super_models.png" alt="RTP scatter (122B Super models)" style="width: auto; height: 30%;"/>
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_scatter_other_models.png" alt="RTP scatter (other models)" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_small_llm_combo_full.png" alt="RTP small LLM combo full" style="width: auto; height: 30%;"/>
+
+<img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/rtp_small_llm_reason_turn_wc_base_full.png" alt="RTP small LLM reason turn WC base full" style="width: auto; height: 30%;"/>
 
 <img src="https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/tool_action_distribution.png" alt="Tool action distribution" style="width: auto; height: 30%;"/>
 

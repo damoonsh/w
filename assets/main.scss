@@ -25,6 +25,11 @@
   --toggle-bg:    #e0e0e0;
   --toggle-text:  #333333;
   --toggle-border:#bbbbbb;
+  --table-text:   #333333;
+  --table-head-bg:#f4f4f4;
+  --table-row-bg: #ffffff;
+  --table-alt-bg: #f7f7f7;
+  --table-border: #dddddd;
 }
 
 /* Dark theme – light-dark bg + light navy-blue accents */
@@ -43,6 +48,11 @@
   --toggle-bg:    #353840;
   --toggle-text:  #a8c6e8;
   --toggle-border:#4a5a72;
+  --table-text:   #222831;
+  --table-head-bg:#f4f4f4;
+  --table-row-bg: #ffffff;
+  --table-alt-bg: #e9edf3;
+  --table-border: #cfd6df;
 }
 
 /* Brown / warm theme – light-brown bg + golden-yellow accents */
@@ -61,6 +71,11 @@
   --toggle-bg:    #e8d0a0;
   --toggle-text:  #3b2a1a;
   --toggle-border:#c4a020;
+  --table-text:   #3b2a1a;
+  --table-head-bg:#f8f1e3;
+  --table-row-bg: #ffffff;
+  --table-alt-bg: #f4e4c3;
+  --table-border: #d8c394;
 }
 
 /* =========================================================
@@ -141,6 +156,30 @@ code {
   background-color: var(--code-bg) !important;
   color: var(--code-text) !important;
   border-color: var(--code-border) !important;
+}
+
+/* Tables */
+.post-content table {
+  color: var(--table-text) !important;
+  border-color: var(--table-border) !important;
+}
+
+.post-content table th,
+.post-content table td {
+  border-color: var(--table-border) !important;
+}
+
+.post-content table th {
+  background-color: var(--table-head-bg) !important;
+  color: var(--table-text) !important;
+}
+
+.post-content table tbody tr {
+  background-color: var(--table-row-bg) !important;
+}
+
+.post-content table tbody tr:nth-child(odd) {
+  background-color: var(--table-alt-bg) !important;
 }
 
 /* Override syntax-highlighter token colours in dark/brown so text stays readable */
@@ -439,15 +478,20 @@ code {
 .post-toc__row {
   display: flex;
   align-items: flex-start;
-  gap: 0.2rem;
+  gap: 0.12rem;
   margin: 0 0 0.35rem 0;
 }
 
 .post-toc__toggle,
 .post-toc__toggle-spacer {
-  flex: 0 0 0.7rem;
-  width: 0.7rem;
+  flex: 0 0 0.55rem;
+  width: 0.55rem;
   height: 1rem;
+}
+
+.post-toc__toggle-spacer {
+  flex-basis: 0.15rem;
+  width: 0.15rem;
 }
 
 .post-toc__toggle {
@@ -481,7 +525,7 @@ code {
 }
 
 .post-toc__sublist {
-  margin: 0 0 0 0.95rem;
+  margin: 0 0 0 0.25rem;
   padding-left: 0.35rem;
   border-left: 1px solid var(--border);
 }
