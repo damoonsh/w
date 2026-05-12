@@ -2,6 +2,7 @@
 title: "Post-Training Releases Survey: Nemotron Cascade, KIMI-DEV, Hermes 4, and Intellect-3"
 date: 2026-05-12
 description: "A survey of four recent post-training LLM releases — examining their methodologies, open data, and emerging trends in the space."
+image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/post_train_theme.png
 ---
 
 ## Introduction
