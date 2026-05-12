@@ -75,12 +75,18 @@ function postTocInit() {
     item.childList.hidden = !open;
   }
 
-  function openAncestors(node) {
-    var parent = node && node.parent;
-    while (parent && parent !== root) {
-      setOpen(tocItemsById[parent.id], true);
-      parent = parent.parent;
+  function syncOpenState(activeNode) {
+    var openIds = {};
+    var node = activeNode;
+
+    while (node && node !== root) {
+      if (node.children.length) openIds[node.id] = true;
+      node = node.parent;
     }
+
+    Object.keys(tocItemsById).forEach(function (id) {
+      setOpen(tocItemsById[id], !!openIds[id]);
+    });
   }
 
   function buildList(nodes, isNested) {
@@ -164,15 +170,17 @@ function postTocInit() {
       for (var i = 0; i < links.length; i++) {
         if (links[i].getAttribute('href') === target) {
           links[i].classList.add('is-active');
-          openAncestors(nodeById[active.id]);
+          syncOpenState(nodeById[active.id]);
           break;
         }
       }
+    } else {
+      syncOpenState(null);
     }
   }
 
   if (window.location.hash) {
-    openAncestors(nodeById[window.location.hash.slice(1)]);
+    syncOpenState(nodeById[window.location.hash.slice(1)]);
   }
 
   window.addEventListener('scroll', updateActive, { passive: true });
