@@ -39,23 +39,114 @@ function postTocInit() {
     return id;
   }
 
-  /* <ul> avoids default <ol> numbering if theme CSS wins over our list reset */
-  var listEl = document.createElement('ul');
-  listEl.className = 'post-toc__list';
+  var root = { level: 0, children: [] };
+  var stack = [root];
+  var nodeById = {};
 
   headings.forEach(function (h, index) {
     var level = parseInt(h.tagName.slice(1), 10);
     ensureId(h, index);
-    var li = document.createElement('li');
-    li.className = 'post-toc__item post-toc__depth-' + level;
-    var a = document.createElement('a');
-    a.className = 'post-toc__link';
-    a.href = '#' + h.id;
-    a.textContent = (h.textContent || '').trim();
-    li.appendChild(a);
-    listEl.appendChild(li);
+    while (stack.length > 1 && stack[stack.length - 1].level >= level) {
+      stack.pop();
+    }
+
+    var parent = stack[stack.length - 1];
+    var node = {
+      heading: h,
+      id: h.id,
+      index: index,
+      level: level,
+      text: (h.textContent || '').trim(),
+      parent: parent,
+      children: []
+    };
+    parent.children.push(node);
+    nodeById[node.id] = node;
+    stack.push(node);
   });
 
+  var tocItemsById = {};
+
+  function setOpen(item, open) {
+    if (!item || !item.button || !item.childList) return;
+    item.li.classList.toggle('is-open', open);
+    item.button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    item.button.setAttribute('aria-label', (open ? 'Collapse ' : 'Expand ') + item.node.text);
+    item.childList.hidden = !open;
+  }
+
+  function openAncestors(node) {
+    var parent = node && node.parent;
+    while (parent && parent !== root) {
+      setOpen(tocItemsById[parent.id], true);
+      parent = parent.parent;
+    }
+  }
+
+  function buildList(nodes, isNested) {
+    var ul = document.createElement('ul');
+    ul.className = isNested ? 'post-toc__list post-toc__sublist' : 'post-toc__list';
+
+    nodes.forEach(function (node) {
+      var li = document.createElement('li');
+      li.className = 'post-toc__item post-toc__depth-' + node.level;
+
+      var row = document.createElement('div');
+      row.className = 'post-toc__row';
+
+      var a = document.createElement('a');
+      a.className = 'post-toc__link';
+      a.href = '#' + node.id;
+      a.textContent = node.text;
+
+      if (node.children.length) {
+        var button = document.createElement('button');
+        button.className = 'post-toc__toggle';
+        button.type = 'button';
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-label', 'Expand ' + node.text);
+        row.appendChild(button);
+      } else {
+        var spacer = document.createElement('span');
+        spacer.className = 'post-toc__toggle-spacer';
+        row.appendChild(spacer);
+      }
+
+      row.appendChild(a);
+      li.appendChild(row);
+
+      var childList = null;
+      if (node.children.length) {
+        childList = buildList(node.children, true);
+        childList.id = 'post-toc-children-' + node.index;
+        childList.hidden = true;
+        li.appendChild(childList);
+        row.querySelector('.post-toc__toggle').setAttribute('aria-controls', childList.id);
+      }
+
+      tocItemsById[node.id] = {
+        node: node,
+        li: li,
+        button: row.querySelector('.post-toc__toggle'),
+        childList: childList
+      };
+
+      if (tocItemsById[node.id].button) {
+        tocItemsById[node.id].button.addEventListener('click', function () {
+          var isOpen = tocItemsById[node.id].button.getAttribute('aria-expanded') === 'true';
+          setOpen(tocItemsById[node.id], !isOpen);
+        });
+      }
+
+      ul.appendChild(li);
+    });
+
+    return ul;
+  }
+
+  /* <ul> avoids default <ol> numbering if theme CSS wins over our list reset */
+  var listEl = buildList(root.children, false);
+  nav.textContent = '';
   nav.appendChild(listEl);
   aside.removeAttribute('hidden');
 
@@ -73,10 +164,15 @@ function postTocInit() {
       for (var i = 0; i < links.length; i++) {
         if (links[i].getAttribute('href') === target) {
           links[i].classList.add('is-active');
+          openAncestors(nodeById[active.id]);
           break;
         }
       }
     }
+  }
+
+  if (window.location.hash) {
+    openAncestors(nodeById[window.location.hash.slice(1)]);
   }
 
   window.addEventListener('scroll', updateActive, { passive: true });

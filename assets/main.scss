@@ -385,6 +385,34 @@ code {
   display: none;
 }
 
+/* TOC + book sidebar: visible below the desktop grid breakpoint (posts use the same rule) */
+@media screen and (max-width: 55.99rem) {
+  .post-with-toc:not(.post-with-toc--book) .post-toc:not([hidden]) {
+    display: block;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    max-height: none;
+    overflow: visible;
+  }
+
+  .post-with-toc--book .post-with-toc__side {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    margin: 0 0 1.25rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .post-with-toc--book .post-toc:not([hidden]) {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+}
+
 .post-toc__heading {
   font-size: 0.625rem;
   font-weight: 700;
@@ -404,12 +432,64 @@ code {
 }
 
 .post-toc__item {
-  margin: 0 0 0.35rem 0;
+  margin: 0;
   line-height: 1.35;
+}
+
+.post-toc__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.2rem;
+  margin: 0 0 0.35rem 0;
+}
+
+.post-toc__toggle,
+.post-toc__toggle-spacer {
+  flex: 0 0 0.7rem;
+  width: 0.7rem;
+  height: 1rem;
+}
+
+.post-toc__toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.12rem 0 0 0;
+}
+
+.post-toc__toggle::before {
+  content: "";
+  display: block;
+  width: 0.32rem;
+  height: 0.32rem;
+  margin: 0.2rem auto 0;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.12s ease;
+}
+
+.post-toc__item.is-open > .post-toc__row > .post-toc__toggle::before {
+  transform: rotate(45deg);
+}
+
+.post-toc__toggle:hover,
+.post-toc__toggle:focus-visible {
+  color: var(--link);
+}
+
+.post-toc__sublist {
+  margin: 0 0 0 0.95rem;
+  padding-left: 0.35rem;
+  border-left: 1px solid var(--border);
 }
 
 .post-toc__link {
   display: block;
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.6875rem;
   font-weight: 600;
   color: var(--text-muted) !important;
@@ -433,11 +513,35 @@ code {
 }
 
 .post-toc__depth-2 {
-  padding-left: 0.45rem;
+  padding-left: 0;
 }
 
 .post-toc__depth-3 {
-  padding-left: 0.85rem;
+  padding-left: 0;
+}
+
+/* Book pages: optional cover above the in-page TOC */
+.post-with-toc__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.book-summary-cover {
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+}
+
+.book-summary-cover img {
+  display: block;
+  width: 100%;
+  max-width: 6.5rem;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px var(--card-shadow);
 }
 
 @media screen and (min-width: 56rem) {
@@ -446,6 +550,15 @@ code {
     grid-template-columns: 9.25rem minmax(0, 1fr);
     gap: 1.25rem;
     align-items: start;
+  }
+
+  .book-summary-cover img {
+    margin: 0;
+    max-width: 100%;
+    max-height: 7.5rem;
+    width: auto;
+    object-fit: contain;
+    object-position: top center;
   }
 
   /* Full-width row: TOC + article use the viewport; only edge padding caps the sides */
@@ -469,5 +582,25 @@ code {
     margin: 0;
     border-right: 1px solid var(--border);
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Book: cover + TOC in left column (same grid track as post TOC aside) */
+  .post-with-toc--book .post-with-toc__side {
+    position: sticky;
+    top: 1.25rem;
+    max-height: calc(100vh - 2.5rem);
+    overflow-y: auto;
+    padding-right: 0.45rem;
+    margin: 0;
+    border-right: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .post-with-toc--book .post-toc:not([hidden]) {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    border-right: none;
   }
 }

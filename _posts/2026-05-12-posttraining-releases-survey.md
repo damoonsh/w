@@ -93,7 +93,9 @@ where advantage is group-normalized: $\hat{A}_{i,t} = \frac{r_i - \text{mean}(r)
 - **Overlong penalty** prevents excessive token usage in instruction-following
 
 **MOPD (Multi-Domain On-Policy Distillation)** is a standout innovation:
-- Uses token-level reverse-KL distillation advantage: $a_t^{\text{MOPD}} = \log\pi_{\text{teacher}}(y_t|s_t) - \log\pi_{\text{train}}(y_t|s_t)$
+- Uses token-level reverse-KL distillation advantage:  
+  *aₜ<sup>MOPD</sup> = log&nbsp;π<sub>teacher</sub>(yₜ&#124;sₜ) − log&nbsp;π<sub>train</sub>(yₜ&#124;sₜ)*
+<!-- rendered as math: aₜᴹᴼᴾᴰ = log π_teacher(yₜ|sₜ) − log π_train(yₜ|sₜ) -->
 - Applies **truncated importance weighting** ($\epsilon_{low}=0.5$, $\epsilon_{high}=2.0$) to handle train-inference mismatch
 - 3 teacher checkpoints selected from the cascade pipeline itself — math teacher (SFT checkpoint), RLHF teacher, multi-domain teacher
 - **2×–3× more sample-efficient** than GRPO on AIME25 and ArenaHard
