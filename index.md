@@ -2,4 +2,4 @@
 layout: home
 ---
 
-Interested in advanced algorithms within the realm of AI and underlying techstack that powers them. I use this space to share my notes and projects. The notes are usually an attempt for me to better understand a concept introduced in a research paper. The projects are my implementation of things I find interesting.
+Pace of change is aggressively fast, I try to write and experiment with a tiny portion of what I find interesting.

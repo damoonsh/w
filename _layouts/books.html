@@ -1,0 +1,26 @@
+---
+layout: default
+---
+{%- assign from_posts = site.posts | where_exp: "post", "post.categories contains 'books' or post.tags contains 'books'" -%}
+{%- assign from_collection = site.books | where_exp: "p", "p.published != false" -%}
+{%- assign book_items = from_posts | concat: from_collection | sort: "date" | reverse -%}
+<div class="home">
+  {%- if page.title -%}
+    <h1 class="page-heading">{{ page.title }}</h1>
+  {%- endif -%}
+
+  <div class="home-intro">
+    {{ content }}
+  </div>
+
+  {%- if book_items.size > 0 -%}
+    <h2 class="posts-heading">Books</h2>
+    <div class="post-grid">
+      {%- for item in book_items -%}
+        {% include teaser-card.html item=item index=forloop.index %}
+      {%- endfor -%}
+    </div>
+  {%- else -%}
+    <p class="books-empty">No entries yet. Add a Markdown file under <code>_books/</code>, or tag a post with <code>categories: [books]</code> or <code>tags: [books]</code>.</p>
+  {%- endif -%}
+</div>

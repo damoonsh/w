@@ -18,7 +18,7 @@
   --link:         #2a7ae2;
   --border:       #e8e8e8;
   --card-bg:      #ffffff;
-  --card-shadow:  rgba(0, 0, 0, 0.08);
+  --card-shadow:  rgba(0, 0, 0, 0.14);
   --header-bg:    #2c2c2c;
   --header-text:  #ffffff;
   --toggle-bg:    #e0e0e0;
@@ -54,7 +54,7 @@
   --link:         #d4a017;
   --border:       #d4a820;
   --card-bg:      #f8eccc;
-  --card-shadow:  rgba(90, 50, 10, 0.15);
+  --card-shadow:  rgba(62, 32, 7, 0.22);
   --header-bg:    #3e2007;
   --header-text:  #f5d060;
   --toggle-bg:    #e8d0a0;
@@ -224,14 +224,27 @@ code {
   margin-bottom: 1.5rem;
   padding-bottom: 0.4rem;
   border-bottom: 2px solid var(--border);
-  color: var(--heading);
+  color: var(--heading) !important;
 }
 
-/* Grid container */
+/* Home / books listing: use horizontal space so the card grid can grow past Minima’s narrow wrapper */
+@media screen and (min-width: 48rem) {
+  .page-content .wrapper:has(.home) {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: max(1.25rem, env(safe-area-inset-left, 0px), min(4.5vw, 3.5rem));
+    padding-right: max(1.25rem, env(safe-area-inset-right, 0px), min(4.5vw, 3.5rem));
+  }
+}
+
+/* Grid container – wider min track ⇒ fewer cards per row; min(100%,…) avoids overflow */
 .post-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
+  gap: clamp(1.1rem, 2vw, 1.75rem);
   margin-bottom: 3rem;
 }
 
@@ -239,14 +252,31 @@ code {
 .post-card {
   border-radius: 10px;
   overflow: hidden;
-  background: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 4px 18px var(--card-shadow);
   transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
 .post-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.07),
+    0 14px 36px var(--card-shadow);
+}
+
+[data-theme="dark"] .post-card {
+  box-shadow:
+    0 0 0 1px rgba(168, 198, 232, 0.1),
+    0 6px 22px rgba(0, 0, 0, 0.42);
+}
+
+[data-theme="dark"] .post-card:hover {
+  box-shadow:
+    0 0 0 1px rgba(168, 198, 232, 0.16),
+    0 10px 36px rgba(0, 0, 0, 0.55);
 }
 
 .post-card__link {
@@ -267,7 +297,7 @@ code {
   width: 100%;
   height: 185px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: var(--bg-alt);
   flex-shrink: 0;
 }
 
@@ -281,6 +311,10 @@ code {
 
 .post-card:hover .post-card__image img {
   transform: scale(1.04);
+}
+
+.post-card--image-contain:hover .post-card__image img {
+  transform: none;
 }
 
 /* Gradient placeholders – cycles through 5 colour variants */
@@ -338,7 +372,7 @@ code {
 .post-card__date {
   display: block;
   font-size: 0.78rem;
-  color: #888;
+  color: var(--text-muted);
   letter-spacing: 0.03em;
   text-transform: uppercase;
   margin-bottom: 0.35rem;
@@ -349,13 +383,13 @@ code {
   font-weight: 600;
   line-height: 1.35;
   margin: 0 0 0.55rem 0;
-  color: #1a1a1a;
+  color: var(--heading) !important;
 }
 
 .post-card__excerpt {
   font-size: 0.875rem;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-muted);
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;

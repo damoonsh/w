@@ -3,8 +3,19 @@ title: Damoon Shahhosseini
 baseurl: "/w"
 url: "https://damoonsh.github.io"
 
+header_pages:
+  - books.md
+
 plugins:
   - jekyll-mermaid
+
+collections:
+  projects:
+    output: true
+    permalink: /projects/:name/
+  books:
+    output: true
+    permalink: /books/:name/
 
 # Automatically apply layout: post to every post
 defaults:
@@ -13,3 +24,15 @@ defaults:
       type: "posts"
     values:
       layout: "post"
+  - scope:
+      path: ""
+      type: "projects"
+    values:
+      layout: "page"
+      hide_card_date: true
+  - scope:
+      path: ""
+      type: "books"
+    values:
+      layout: "book-summary"
+      hide_card_date: false
