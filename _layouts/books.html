@@ -1,9 +1,13 @@
 ---
 layout: default
 ---
-{%- assign from_posts = site.posts | where_exp: "post", "post.categories contains 'books' or post.tags contains 'books'" -%}
-{%- assign from_collection = site.books | where_exp: "p", "p.published != false" -%}
-{%- assign book_items = from_posts | concat: from_collection | sort: "date" | reverse -%}
+{%- comment -%}
+  GitHub Pages uses Jekyll 3.x — no `concat` filter (Jekyll 4+). List collection books
+  then tagged posts, each group sorted by date (newest first).
+{%- endcomment -%}
+{%- assign from_posts = site.posts | where_exp: "post", "post.categories contains 'books' or post.tags contains 'books'" | sort: "date" | reverse -%}
+{%- assign from_collection = site.books | where_exp: "p", "p.published != false" | sort: "date" | reverse -%}
+{%- assign book_count = from_collection.size | plus: from_posts.size -%}
 <div class="home">
   {%- if page.title -%}
     <h1 class="page-heading">{{ page.title }}</h1>
@@ -13,11 +17,15 @@ layout: default
     {{ content }}
   </div>
 
-  {%- if book_items.size > 0 -%}
+  {%- if book_count > 0 -%}
     <h2 class="posts-heading">Books</h2>
     <div class="post-grid">
-      {%- for item in book_items -%}
+      {%- for item in from_collection -%}
         {% include teaser-card.html item=item index=forloop.index %}
+      {%- endfor -%}
+      {%- for item in from_posts -%}
+        {%- assign card_idx = forloop.index | plus: from_collection.size -%}
+        {% include teaser-card.html item=item index=card_idx %}
       {%- endfor -%}
     </div>
   {%- else -%}
