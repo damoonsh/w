@@ -2,7 +2,7 @@
 title: 1 2 3 4
 description: Paul Auster's latest novel, similar setup as previous novels but delving into a more complex, sci-fi like theme.
 date: 2022-06-19
-image: https://images.leslibraires.ca/books/9782330090517/front/9782330090517_large.jpg
+image: https://covers.openlibrary.org/b/isbn/9782330090517-L.jpg
 ---
 
 # Introduction
