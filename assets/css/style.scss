@@ -3,6 +3,11 @@
 
 @import "minima";
 
+// GitHub Pages (Sass 3.7) parses CSS min/max/clamp as Sass functions; pass through raw.
+@function css($expression) {
+  @return unquote($expression);
+}
+
 /* =========================================================
    Theme variables – light (default), dark, brown
    ========================================================= */
@@ -235,16 +240,16 @@ code {
     max-width: none;
     width: 100%;
     box-sizing: border-box;
-    padding-left: max(1.25rem, env(safe-area-inset-left, 0px), min(4.5vw, 3.5rem));
-    padding-right: max(1.25rem, env(safe-area-inset-right, 0px), min(4.5vw, 3.5rem));
+    padding-left: css("max(1.25rem, env(safe-area-inset-left, 0px), min(4.5vw, 3.5rem))");
+    padding-right: css("max(1.25rem, env(safe-area-inset-right, 0px), min(4.5vw, 3.5rem))");
   }
 }
 
 /* Grid container – wider min track ⇒ fewer cards per row; min(100%,…) avoids overflow */
 .post-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
-  gap: clamp(1.1rem, 2vw, 1.75rem);
+  grid-template-columns: css("repeat(auto-fill, minmax(min(100%, 21rem), 1fr))");
+  gap: css("clamp(1.1rem, 2vw, 1.75rem)");
   margin-bottom: 3rem;
 }
 
