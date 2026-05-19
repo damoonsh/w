@@ -11,7 +11,7 @@ layout: default
     {%- assign blog_post_count = blog_post_count | plus: 1 -%}
   {%- endunless -%}
 {%- endfor -%}
-{%- assign project_list = site.projects | where_exp: "p", "p.published != false" | sort: "title" -%}
+{%- assign project_list = site.projects | reject: "published", false | sort: "title" -%}
 <div class="home">
   {%- if page.title -%}
     <h1 class="page-heading">{{ page.title }}</h1>

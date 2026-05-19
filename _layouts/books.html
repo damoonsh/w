@@ -2,12 +2,20 @@
 layout: default
 ---
 {%- comment -%}
-  GitHub Pages uses Jekyll 3.x — no `concat` filter (Jekyll 4+). List collection books
-  then tagged posts, each group sorted by date (newest first).
+  GitHub Pages: Jekyll 3.10 + Liquid 4.0.4 — `where_exp` cannot parse `!= false` (parse_condition
+  fails). Use `reject: "published", false` instead. Avoid `or` in one `if` for older Liquid quirks.
 {%- endcomment -%}
-{%- assign from_posts = site.posts | where_exp: "post", "post.categories contains 'books' or post.tags contains 'books'" | sort: "date" | reverse -%}
-{%- assign from_collection = site.books | where_exp: "p", "p.published != false" | sort: "date" | reverse -%}
-{%- assign book_count = from_collection.size | plus: from_posts.size -%}
+{%- assign from_collection = site.books | reject: "published", false | sort: "date" | reverse -%}
+{%- assign any_books = false -%}
+{%- if from_collection.size > 0 -%}
+  {%- assign any_books = true -%}
+{%- endif -%}
+{%- for post in site.posts -%}
+  {%- assign book_post = false -%}
+  {%- if post.categories contains 'books' -%}{%- assign book_post = true -%}{%- endif -%}
+  {%- if post.tags contains 'books' -%}{%- assign book_post = true -%}{%- endif -%}
+  {%- if book_post -%}{%- assign any_books = true -%}{%- endif -%}
+{%- endfor -%}
 <div class="home">
   {%- if page.title -%}
     <h1 class="page-heading">{{ page.title }}</h1>
@@ -17,15 +25,21 @@ layout: default
     {{ content }}
   </div>
 
-  {%- if book_count > 0 -%}
+  {%- if any_books -%}
     <h2 class="posts-heading">Books</h2>
     <div class="post-grid">
       {%- for item in from_collection -%}
         {% include teaser-card.html item=item index=forloop.index %}
       {%- endfor -%}
-      {%- for item in from_posts -%}
-        {%- assign card_idx = forloop.index | plus: from_collection.size -%}
-        {% include teaser-card.html item=item index=card_idx %}
+      {%- assign idx = from_collection.size -%}
+      {%- for post in site.posts -%}
+        {%- assign book_post = false -%}
+        {%- if post.categories contains 'books' -%}{%- assign book_post = true -%}{%- endif -%}
+        {%- if post.tags contains 'books' -%}{%- assign book_post = true -%}{%- endif -%}
+        {%- if book_post -%}
+          {%- assign idx = idx | plus: 1 -%}
+          {% include teaser-card.html item=post index=idx %}
+        {%- endif -%}
       {%- endfor -%}
     </div>
   {%- else -%}
