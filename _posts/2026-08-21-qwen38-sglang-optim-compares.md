@@ -1,6 +1,6 @@
 ---
 title: "Qwen3.8-27B Speed Optimizer Comparisons on SGLang"
-date: 2026-08-23
+date: 2026-08-21
 image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/qwen38-comps.png
 description: "Comparing DSpark, DFlash, DFlash2, and MTP vs base Qwen3.8 NVFP4 via SGLang on DGX Spark, on a real-world-tailored supabase eval with MCP and tool calls."
 plotly: true
