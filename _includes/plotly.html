@@ -1,0 +1,79 @@
+{%- comment -%}
+  Load Plotly only on posts/pages with `plotly: true` in front matter.
+  Exposes window.blogPlotlyTheme() from CSS vars + re-themes on toggle.
+{%- endcomment -%}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script>
+(function () {
+  function cssVar(name, fallback) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  window.blogPlotlyTheme = function () {
+    var bg = cssVar('--bg', '#2b2d35');
+    var bgAlt = cssVar('--bg-alt', '#353840');
+    var text = cssVar('--text', '#d8dce8');
+    var muted = cssVar('--text-muted', '#8f96aa');
+    var heading = cssVar('--heading', '#a8c6e8');
+    var border = cssVar('--border', '#4a5a72');
+    return {
+      paper_bgcolor: bg,
+      plot_bgcolor: bgAlt,
+      font: { color: text, family: 'system-ui, -apple-system, sans-serif', size: 13 },
+      title: { font: { color: heading, size: 16 } },
+      legend: {
+        bgcolor: 'rgba(0,0,0,0)',
+        bordercolor: border,
+        font: { color: text },
+        orientation: 'h',
+        y: 1.12,
+        x: 0
+      },
+      xaxis: {
+        color: muted,
+        gridcolor: border,
+        zerolinecolor: border,
+        linecolor: border,
+        tickfont: { color: muted },
+        title: { font: { color: muted } }
+      },
+      yaxis: {
+        color: muted,
+        gridcolor: border,
+        zerolinecolor: border,
+        linecolor: border,
+        tickfont: { color: muted },
+        title: { font: { color: muted } }
+      },
+      colorway: ['#7aafd4', '#a8c6e8', '#6bcf8e', '#e8b86d', '#d48a8a'],
+      hoverlabel: {
+        bgcolor: bgAlt,
+        bordercolor: border,
+        font: { color: text }
+      },
+      margin: { t: 72, r: 28, b: 52, l: 60 }
+    };
+  };
+
+  window.blogPlotlyConfig = {
+    responsive: true,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+  };
+
+  // Re-apply layout colors when the site theme toggle changes.
+  var _setTheme = window.setTheme;
+  if (typeof _setTheme === 'function') {
+    window.setTheme = function (t) {
+      _setTheme(t);
+      document.querySelectorAll('.js-plotly-plot').forEach(function (el) {
+        if (el.id && window.Plotly) {
+          Plotly.relayout(el.id, window.blogPlotlyTheme());
+        }
+      });
+    };
+  }
+})();
+</script>

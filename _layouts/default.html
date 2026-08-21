@@ -79,6 +79,10 @@
       })();
     </script>
 
+    {%- if page.plotly -%}
+      {%- include plotly.html -%}
+    {%- endif -%}
+
   </body>
 
 </html>
