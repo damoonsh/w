@@ -38,6 +38,17 @@ plotly: true
 .table-graph-row > .tg-col table {
   width: auto; max-width: 100%; margin: 0 auto; font-size: 0.83em;
 }
+.table-graph-row.tg-wide { max-width: 1180px; }
+.table-graph-row.tg-wide > .tg-col { flex: 1.35 1 420px; min-width: 300px; }
+.table-graph-row.tg-wide > .tg-col.tg-graph { flex: 1 1 380px; }
+.table-graph-row.tg-wide > .tg-col table {
+  font-size: 0.72em;
+  width: 100%;
+}
+.table-graph-row.tg-wide > .tg-col table th,
+.table-graph-row.tg-wide > .tg-col table td {
+  padding: 0.28rem 0.42rem; white-space: nowrap;
+}
 .table-graph-row > .tg-col .blog-plotly-figure {
   margin: 0 auto !important; max-width: none !important;
 }
@@ -418,18 +429,18 @@ Three acceptance numbers appear on the same line, and they answer different ques
 
 The aggregate accept mean in the table above is the middle column. Positional curves explain *why* MTP-6 posts the highest accept mean (44%) but loses decode to DFlash2: MTP keeps the tail alive (pos-6 still ~24%), while DSpark's curve is essentially zero by pos-7 (~4%). DFlash2 sits between — strong pos-1 (~72%) with a gentler decay than DSpark (~62% → ~13% at the k=7 tail).
 
-<div class="table-graph-row">
+<div class="table-graph-row tg-wide">
 <div class="tg-col" markdown="1">
 
 | optim | pos-1 mean | pos-*k* mean | pooled pos mean | aggregate accept | n windows |
 |---|---|---|---|---|---|
-| DSpark-8 | 58% | 3% (pos-8) | 19% | 19% | 524 |
-| DSpark-7 | 62% | 4% (pos-7) | 22% | 22% | 470 |
-| MTP-6 | 75% | 24% (pos-6) | 44% | 44% | 165 |
-| DFlash2-8 | 71% | 9% (pos-8) | 30% | 30% | 381 |
-| DFlash2-7 | 73% | 13% (pos-7) | 35% | 35% | 365 |
+| DSpark-8 | 58% | 3% | 19% | 19% | 524 |
+| DSpark-7 | 62% | 4% | 22% | 22% | 470 |
+| MTP-6 | 75% | 24% | 44% | 44% | 165 |
+| DFlash2-8 | 71% | 9% | 30% | 30% | 381 |
+| DFlash2-7 | 73% | 13% | 35% | 35% | 365 |
 
-*(pos means are averages over all `Per-position acceptance rate` samples (~10 s SpecDecoding windows); pooled mean is unweighted across all position×window pairs and can differ from aggregate accept when deeper slots pull the unweighted average down. MTP-6 is an incomplete run — 165 windows.)*
+<p style="margin:0.4rem 0 0;font-size:0.72em;line-height:1.4;opacity:0.78;color:var(--text-muted);"><em>pos means are averages over all <b>Per-position acceptance rate</b> samples (~10 s SpecDecoding windows); pooled mean is unweighted across all position×window pairs and can differ from aggregate accept when deeper slots pull the unweighted average down. MTP-6 is an incomplete run — 165 windows.</em></p>
 
 </div>
 <div class="tg-col tg-graph" markdown="1">
@@ -684,7 +695,7 @@ Three takeaways:
 
 # Compare across engines
 
-Same workload, same box — three serving stacks. Pick a metric below; each row shows **base**, **DSpark**, **DFlash2**, and **MTP** side by side. For mean draft/acceptance length and acceptance-rate density, panels are ordered **DSpark → DFlash2 → MTP → base** so the empty base column sits last; decode and GPU thermal keep **base → DSpark → DFlash2 → MTP**. Within each mini-chart: **llama** = green, **SGLang** = red, **vLLM** = blue. When a stack ran two draft depths (k=7 vs k=8), the second trace is **dotted** with a lighter hue of that engine's color. SGLang and vLLM MTP-6 runs were incomplete.
+Same workload, same box — three serving stacks. Pick a metric below. Decode and GPU thermal show **base → DSpark → DFlash2 → MTP** (four columns). Mean draft/acceptance length and acceptance-rate density drop **base** (no draft/accept samples) and use three centered columns: **DSpark → DFlash2 → MTP**. Within each mini-chart: **llama** = green, **SGLang** = red, **vLLM** = blue. When a stack ran two draft depths (k=7 vs k=8), the second trace is **dotted** with a lighter hue of that engine's color. SGLang and vLLM MTP-6 runs were incomplete.
 
 <div class="cross-engine-widget">
   <div class="cross-engine-toolbar" role="tablist" aria-label="Cross-engine metric">
@@ -713,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof Plotly === 'undefined') return;
   var DATA = {"base":{"llama":[{"cell":"base","decode":11.3,"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.12,0.3,0.72,0.6,1.08,2.41,3.67,6.73,14.55,29.71,37.4,1.32,1.2,0.18]}],"sglang":[{"cell":"base","decode":11.41,"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.11,0.3,5.63,5.11,11.12,59.58,16.49,0.78,0.19,0.15,0.3,0.04,0.15,0.07,0.0,0.0]}],"vllm":[{"cell":"base","decode":10.47,"gpuD":[0.0,0.0,0.0,0.0,0.0,0.18,0.18,0.35,0.53,0.8,1.33,1.77,4.44,11.36,46.23,26.35,3.9,1.51,0.09,0.27,0.35,0.0,0.27,0.09,0.0]}]},"dspark":{"llama":[{"cell":"DSpark-7","decode":16.04,"draft":2.68,"accD":[0.0,0.0,5.66,30.19,32.08,14.15,9.43,3.77,0.94,0.94,1.89,0.94,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.54,0.0,0.72,0.54,0.72,0.72,0.9,1.62,9.21,21.12,22.56,21.12,17.33,2.71,0.18]},{"cell":"DSpark-8","decode":14.78,"draft":2.55,"accD":[0.0,0.0,12.24,36.05,29.93,10.2,2.72,4.08,3.4,0.68,0.0,0.68,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.14,0.0,0.0,0.0,0.28,0.28,0.41,0.97,0.55,1.52,1.38,7.05,22.27,19.23,22.68,19.09,4.15,0.0]}],"sglang":[{"cell":"DSpark","decode":22.3,"draft":2.68,"accD":[0.36,0.76,11.36,24.33,25.81,14.73,4.78,3.85,2.89,1.24,1.16,0.92,0.76,0.56,0.72,0.24,0.28,0.12,0.24,0.2],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.29,1.04,7.59,12.16,33.06,36.19,8.86,0.12,0.12,0.06,0.17,0.35,0.0,0.0,0.0]}],"vllm":[{"cell":"DSpark-7","decode":18.76,"draft":2.57,"accD":[0.43,0.85,11.28,32.34,28.09,14.47,5.32,2.98,1.49,0.64,0.21,0.64,0.43,0.0,0.21,0.21,0.0,0.0,0.0,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.34,0.23,0.68,0.45,1.13,1.24,4.07,6.1,26.89,26.44,22.49,6.33,0.23,0.23,1.24,1.36,0.45,0.11,0.0]},{"cell":"DSpark-8","decode":18.03,"draft":2.55,"accD":[1.91,2.48,26.72,32.25,16.6,9.54,4.01,2.67,1.15,0.38,0.0,0.57,0.57,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.1,0.2,0.3,0.6,0.4,0.4,1.2,2.6,4.2,27.17,34.17,20.18,3.3,0.6,0.6,1.9,1.3,0.8,0.0,0.0]}]},"dflash2":{"llama":[{"cell":"DFlash2-7","decode":22.29,"draft":4.3,"accD":[0.0,0.0,0.0,0.0,0.0,0.8,13.6,20.8,12.8,12.0,15.2,8.8,8.8,4.0,3.2,0.0,0.0,0.0,0.8,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.62,0.31,1.55,0.31,1.55,1.86,4.64,4.02,8.05,16.72,20.74,25.7,13.93,0.0,0.0]},{"cell":"DFlash2-8","decode":20.75,"draft":4.19,"accD":[0.0,0.0,0.0,0.0,1.5,3.01,12.03,25.56,18.05,9.02,5.26,9.77,9.02,3.01,0.75,1.5,1.5,0.0,0.0,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.14,0.14,0.28,0.28,0.57,1.71,1.56,2.7,3.84,11.66,19.49,27.31,28.73,1.56,0.0]}],"sglang":[{"cell":"DFlash2","decode":30.18,"draft":3.73,"accD":[0.34,0.12,0.1,1.22,5.96,21.31,19.92,15.38,13.69,8.06,5.69,5.0,2.51,2.15,1.08,0.88,0.61,0.34,0.29,0.17],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.02,0.02,0.19,0.58,2.97,10.07,30.41,38.64,6.64,4.65,3.62,1.15,0.49,0.23,0.14,0.14,0.02,0.0,0.0,0.0]}],"vllm":[{"cell":"DFlash2-7","decode":22.55,"draft":3.42,"accD":[0.0,0.27,0.0,8.22,15.07,17.53,17.53,13.42,9.59,4.93,5.75,3.56,2.19,1.1,1.1,0.0,0.0,0.0,0.27,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.3,0.3,0.44,0.44,1.18,1.63,5.47,25.15,38.46,16.57,4.14,0.89,1.18,1.33,1.48,0.89,0.15,0.0,0.0]},{"cell":"DFlash2-8","decode":22.86,"draft":3.37,"accD":[0.0,0.0,3.67,16.01,22.83,17.85,14.17,7.09,6.3,4.72,3.15,1.57,0.79,0.52,0.52,0.26,0.26,0.0,0.0,0.0],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.14,0.14,0.14,0.28,0.56,0.83,2.36,5.97,8.06,30.0,24.72,14.86,6.67,0.56,1.67,1.25,0.97,0.69,0.14,0.0]}]},"mtp":{"llama":[{"cell":"MTP-6","decode":20.52,"draft":4.33,"accD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,5.3,28.03,27.27,15.15,15.15,9.09],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.12,0.0,0.48,0.72,1.44,2.39,3.71,8.25,20.45,25.12,22.25,11.96,2.99,0.12]}],"sglang":[{"cell":"MTP","decode":22.91,"draft":2.77,"accD":[0.0,0.0,0.0,0.0,0.05,0.98,2.52,7.05,14.93,14.73,12.36,11.48,7.42,8.81,5.41,4.63,5.25,3.76,3.91,2.37],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.07,0.0,0.0,0.15,0.45,1.19,3.94,38.24,22.32,20.01,11.01,0.74,0.6,0.52,0.45,0.07,0.22,0.0,0.0]},{"cell":"MTP-6","decode":25.07,"trunc":true,"draft":3.46,"accD":[0.0,0.0,0.0,0.0,2.15,7.77,11.9,13.55,16.69,12.07,9.26,8.6,6.12,5.29,4.3,2.15,2.31,1.32,1.49,0.83],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.17,0.0,0.5,0.66,2.16,5.15,6.98,14.62,23.42,19.44,25.91,0.66,0.33,0.0,0.0,0.0,0.0]}],"vllm":[{"cell":"MTP-6","decode":19.42,"trunc":true,"draft":3.65,"accD":[0.0,0.0,0.0,1.21,6.06,10.91,18.18,16.36,7.88,7.27,10.3,6.67,3.64,2.42,3.64,1.21,2.42,1.21,0.61,0.61],"gpuD":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.32,0.32,0.96,0.96,2.25,5.14,7.4,13.5,27.33,23.47,9.0,2.89,0.64,0.96,3.86,0.64,0.32,0.0]}]}};
   var FAMILIES_DEFAULT = ['base', 'dspark', 'dflash2', 'mtp'];
-  var FAMILIES_SPEC = ['dspark', 'dflash2', 'mtp', 'base'];
+  var FAMILIES_SPEC = ['dspark', 'dflash2', 'mtp'];
   var FAM_LABEL = { base: 'base', dspark: 'DSpark', dflash2: 'DFlash2', mtp: 'MTP' };
   var ENGINES = ['llama', 'sglang', 'vllm'];
   var ENGINE = {
@@ -724,9 +735,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var ACCEPT_X = []; for (var ai = 0; ai < 20; ai++) ACCEPT_X.push(ai * 0.05 + 0.025);
   var GPU_X = []; for (var gi = 0; gi < 25; gi++) GPU_X.push(39 + 2 * gi);
   var METRICS = {
-    'draft-len': { plot: 'cross-plot-draft-len', height: 300, type: 'bar', field: 'draft', yTitle: 'tokens/step', label: 'Mean draft/acceptance length' },
+    'draft-len': { plot: 'cross-plot-draft-len', height: 340, type: 'bar', field: 'draft', yTitle: 'tokens/step', label: 'Mean draft/acceptance length' },
     'accept-density': { plot: 'cross-plot-accept-density', height: 300, type: 'density', field: 'accD', x: ACCEPT_X, xTitle: 'accept rate', yTitle: '% / 5pt bin', label: 'Density of acceptance-rate' },
-    'decode': { plot: 'cross-plot-decode', height: 300, type: 'bar', field: 'decode', yTitle: 'decode tok/s', label: 'Decode tok/s bar chart' },
+    'decode': { plot: 'cross-plot-decode', height: 340, type: 'bar', field: 'decode', yTitle: 'decode tok/s', label: 'Decode tok/s bar chart' },
     'gpu-thermal': { plot: 'cross-plot-gpu-thermal', height: 300, type: 'density', field: 'gpuD', x: GPU_X, xTitle: 'GPU temp (°C)', yTitle: '% / 2° bin', label: 'GPU thermal density' }
   };
   var XAXIS_IDS = ['x', 'x2', 'x3', 'x4'];
@@ -735,6 +746,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function familiesForMetric(metricKey) {
     return (metricKey === 'draft-len' || metricKey === 'accept-density') ? FAMILIES_SPEC : FAMILIES_DEFAULT;
+  }
+
+  function maxFieldAcross(metricKey, field) {
+    var max = 0;
+    familiesForMetric(metricKey).forEach(function (fam) {
+      ENGINES.forEach(function (eng) {
+        (DATA[fam][eng] || []).forEach(function (entry) {
+          var v = entry[field];
+          if (typeof v === 'number' && v > max) max = v;
+        });
+      });
+    });
+    return max;
   }
 
   function traceName(eng, entry) {
@@ -762,12 +786,81 @@ document.addEventListener('DOMContentLoaded', function () {
         y: 1.04,
         xanchor: 'center',
         yanchor: 'bottom',
-        font: { size: 10, color: '#888' }
+        font: { size: 13, color: '#888' }
       };
     });
   }
 
-  function buildTraces(metricKey) {
+  function maxVariantsForFamily(fam) {
+    var max = 1;
+    ENGINES.forEach(function (eng) {
+      max = Math.max(max, (DATA[fam][eng] || []).length);
+    });
+    return max;
+  }
+
+  function slotLabel(fam, vi) {
+    for (var ei = 0; ei < ENGINES.length; ei++) {
+      var entries = DATA[fam][ENGINES[ei]] || [];
+      if (entries[vi]) return entries[vi].cell;
+    }
+    return 'variant ' + (vi + 1);
+  }
+
+  function buildBarTraces(metricKey) {
+    var cfg = METRICS[metricKey];
+    var field = cfg.field;
+    var families = familiesForMetric(metricKey);
+    var traces = [];
+    var legendSeen = {};
+    var xCats = ENGINES.map(function (eng) { return ENGINE[eng].label; });
+
+    families.forEach(function (fam, famIdx) {
+      var xaxis = XAXIS_IDS[famIdx];
+      var yaxis = YAXIS_IDS[famIdx];
+      var nSlots = maxVariantsForFamily(fam);
+      for (var vi = 0; vi < nSlots; vi++) {
+        var ys = [];
+        var texts = [];
+        var colors = [];
+        var hasAny = false;
+        ENGINES.forEach(function (eng) {
+          var entry = (DATA[fam][eng] || [])[vi];
+          if (entry && entry[field] != null) {
+            ys.push(entry[field]);
+            texts.push(String(Math.round(entry[field] * 100) / 100));
+            colors.push(vi > 0 ? ENGINE[eng].alt : ENGINE[eng].color);
+            hasAny = true;
+          } else {
+            ys.push(null);
+            texts.push('');
+            colors.push(vi > 0 ? ENGINE[eng].alt : ENGINE[eng].color);
+          }
+        });
+        if (!hasAny) continue;
+        var label = slotLabel(fam, vi);
+        var showlegend = !legendSeen[label];
+        if (showlegend) legendSeen[label] = true;
+        traces.push({
+          name: label,
+          x: xCats,
+          y: ys,
+          type: 'bar',
+          xaxis: xaxis,
+          yaxis: yaxis,
+          showlegend: showlegend,
+          marker: { color: colors },
+          text: texts,
+          textposition: 'outside',
+          textfont: { size: 11 },
+          hovertemplate: '%{x}<br>' + label + ': %{y}<extra></extra>'
+        });
+      }
+    });
+    return traces;
+  }
+
+  function buildDensityTraces(metricKey) {
     var cfg = METRICS[metricKey];
     var families = familiesForMetric(metricKey);
     var traces = [];
@@ -781,88 +874,100 @@ document.addEventListener('DOMContentLoaded', function () {
           var name = traceName(eng, entry);
           var showlegend = !legendSeen[name];
           if (showlegend) legendSeen[name] = true;
-          if (cfg.type === 'bar') {
-            var val = entry[cfg.field];
-            if (val == null) return;
-            traces.push({
-              name: name,
-              x: [entry.cell],
-              y: [val],
-              type: 'bar',
-              xaxis: xaxis,
-              yaxis: yaxis,
-              showlegend: showlegend,
-              marker: { color: idx > 0 ? ENGINE[eng].alt : ENGINE[eng].color },
-              text: [String(val)],
-              textposition: 'outside',
-              textfont: { size: 8 },
-              hovertemplate: name + '<br>%{y}<extra></extra>'
-            });
-          } else {
-            var dens = entry[cfg.field];
-            if (!dens) return;
-            traces.push({
-              name: name,
-              x: cfg.x,
-              y: dens,
-              type: 'scatter',
-              mode: 'lines',
-              xaxis: xaxis,
-              yaxis: yaxis,
-              showlegend: showlegend,
-              line: lineStyle(eng, idx),
-              hovertemplate: name + '<br>%{y:.1f}%<extra></extra>'
-            });
-          }
+          var dens = entry[cfg.field];
+          if (!dens) return;
+          traces.push({
+            name: name,
+            x: cfg.x,
+            y: dens,
+            type: 'scatter',
+            mode: 'lines',
+            xaxis: xaxis,
+            yaxis: yaxis,
+            showlegend: showlegend,
+            line: lineStyle(eng, idx),
+            hovertemplate: name + '<br>%{y:.1f}%<extra></extra>'
+          });
         });
       });
     });
     return traces;
   }
 
-  function axisLayout(metricKey, theme) {
+  function buildTraces(metricKey) {
+    var cfg = METRICS[metricKey];
+    return cfg.type === 'bar' ? buildBarTraces(metricKey) : buildDensityTraces(metricKey);
+  }
+
+  function axisLayout(metricKey, theme, nCols) {
     var cfg = METRICS[metricKey];
     var layout = {};
-    XAXIS_IDS.forEach(function (xid, i) {
+    var decodeYMax = metricKey === 'decode' ? maxFieldAcross(metricKey, 'decode') + 4 : null;
+    var draftYMax = metricKey === 'draft-len' ? maxFieldAcross(metricKey, 'draft') + 0.6 : null;
+    var isBar = cfg.type === 'bar';
+    var engineLabels = ENGINES.map(function (eng) { return ENGINE[eng].label; });
+    for (var i = 0; i < nCols; i++) {
       var xKey = i === 0 ? 'xaxis' : 'xaxis' + (i + 1);
       var xax = Object.assign({}, theme.xaxis, {
-        title: cfg.xTitle ? { text: cfg.xTitle, font: { size: 10 } } : undefined,
-        tickangle: cfg.type === 'bar' ? -30 : 0,
+        title: cfg.xTitle ? { text: cfg.xTitle, font: { size: isBar ? 12 : 10 } } : undefined,
+        tickangle: isBar ? 0 : 0,
+        tickfont: { size: isBar ? 11 : (theme.xaxis && theme.xaxis.tickfont && theme.xaxis.tickfont.size) || 10 },
         automargin: true
       });
+      if (isBar) {
+        xax.type = 'category';
+        xax.categoryorder = 'array';
+        xax.categoryarray = engineLabels;
+      }
       if (metricKey === 'accept-density' && cfg.type === 'density') xax.range = [0, 1];
       layout[xKey] = xax;
       var yKey = i === 0 ? 'yaxis' : 'yaxis' + (i + 1);
-      var yax = Object.assign({}, theme.yaxis, { rangemode: 'tozero', automargin: true });
-      if (i === 0) yax.title = { text: cfg.yTitle, font: { size: 10 } };
+      var yax = Object.assign({}, theme.yaxis, {
+        rangemode: 'tozero',
+        automargin: true,
+        tickfont: { size: isBar ? 11 : (theme.yaxis && theme.yaxis.tickfont && theme.yaxis.tickfont.size) || 10 }
+      });
+      if (i === 0) yax.title = { text: cfg.yTitle, font: { size: isBar ? 12 : 10 } };
       else yax.showticklabels = true;
+      if (decodeYMax != null) yax.range = [0, decodeYMax];
+      if (draftYMax != null) yax.range = [0, draftYMax];
       layout[yKey] = yax;
-    });
+    }
     return layout;
   }
 
   function renderMetric(metricKey) {
     var cfg = METRICS[metricKey];
     var families = familiesForMetric(metricKey);
+    var nCols = families.length;
     var traces = buildTraces(metricKey);
     var theme = blogPlotlyTheme();
-    var layout = Object.assign({}, theme, axisLayout(metricKey, theme), {
+    var isBar = cfg.type === 'bar';
+    var layout = Object.assign({}, theme, axisLayout(metricKey, theme, nCols), {
       height: cfg.height,
-      margin: { t: 28, b: 108, l: 48, r: 12 },
-      grid: { rows: 1, columns: 4, pattern: 'independent', roworder: 'top to bottom' },
+      margin: isBar
+        ? { t: 36, b: 118, l: 52, r: 8 }
+        : { t: 28, b: 108, l: 48, r: 12 },
+      grid: {
+        rows: 1,
+        columns: nCols,
+        pattern: 'independent',
+        roworder: 'top to bottom',
+        xgap: isBar ? 0.04 : 0.08
+      },
       showlegend: traces.length > 0,
       legend: {
         orientation: 'h',
-        y: -0.34,
+        y: isBar ? -0.28 : -0.34,
         x: 0.5,
         xanchor: 'center',
-        font: { size: 8 }
+        font: { size: isBar ? 11 : 8 }
       },
       title: { text: '' },
       annotations: familyAnnotations(families),
-      bargap: 0.35,
-      bargroupgap: 0.12,
-      barmode: cfg.type === 'bar' ? 'group' : undefined
+      bargap: isBar ? 0.15 : 0.35,
+      bargroupgap: isBar ? 0.06 : 0.12,
+      barmode: isBar ? 'group' : undefined
     });
     Plotly.newPlot(cfg.plot, traces, layout, Object.assign({}, blogPlotlyConfig, { displayModeBar: false }));
   }
