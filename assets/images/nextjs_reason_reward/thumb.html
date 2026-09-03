@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>thumb</title>
+  <style>
+    html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; background: #2b2d35; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="c" width="1280" height="640"></canvas>
+<script>
+(function () {
+  var c = document.getElementById('c');
+  var ctx = c.getContext('2d');
+  var W = 1280, H = 640;
+
+  function noise() {
+    var img = ctx.createImageData(W, H);
+    var d = img.data;
+    for (var i = 0; i < d.length; i += 4) {
+      var n = 18 + Math.random() * 14;
+      d[i] = 43 + n; d[i + 1] = 45 + n; d[i + 2] = 53 + n; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  function stroke(color, width, points, wobble) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var i = 0; i < points.length; i++) {
+      var x = points[i][0] + (Math.random() - 0.5) * wobble;
+      var y = points[i][1] + (Math.random() - 0.5) * wobble;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  noise();
+
+  ctx.strokeStyle = 'rgba(168,198,232,0.07)';
+  ctx.lineWidth = 1;
+  for (var y = 70; y < H; y += 38) {
+    ctx.beginPath();
+    ctx.moveTo(70, y);
+    ctx.lineTo(W - 70, y);
+    ctx.stroke();
+  }
+
+  // axes
+  stroke('rgba(143,150,170,0.45)', 1.8, [[190, 520], [190, 120], [1080, 120]], 2);
+  stroke('rgba(143,150,170,0.35)', 1.4, [[190, 520], [1080, 520]], 2);
+
+  // downward reason-reward cloud
+  stroke('rgba(122,175,212,0.75)', 2.6, [
+    [240, 200], [320, 230], [410, 210], [520, 280], [640, 320],
+    [760, 390], [880, 430], [1000, 470]
+  ], 7);
+  stroke('rgba(212,138,138,0.65)', 2.1, [
+    [250, 250], [380, 270], [530, 310], [690, 360], [860, 420], [1020, 490]
+  ], 6);
+
+  // hint lift (short arrow up)
+  stroke('rgba(232,184,109,0.85)', 2.8, [
+    [360, 340], [390, 250], [430, 180]
+  ], 4);
+
+  function box(x, y, w, h, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y);
+    ctx.lineTo(x + w, y + 2);
+    ctx.lineTo(x + w - 3, y + h);
+    ctx.lineTo(x, y + h - 3);
+    ctx.closePath();
+    ctx.stroke();
+  }
+  box(230, 160, 90, 70, 'rgba(196,92,38,0.7)');
+  box(720, 400, 110, 80, 'rgba(217,58,58,0.45)');
+  box(500, 240, 100, 64, 'rgba(107,207,142,0.4)');
+
+  ctx.fillStyle = 'rgba(143,150,170,0.55)';
+  ctx.font = '18px ui-serif, Georgia, serif';
+  ctx.fillText('brief, then edit', 200, 572);
+})();
+</script>
+</body>
+</html>
