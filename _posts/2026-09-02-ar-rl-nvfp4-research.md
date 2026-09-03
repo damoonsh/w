@@ -1,5 +1,5 @@
 ---
-title: "Research agents, token credit, NVFP4"
+title: "Plan-tuning mid-size models"
 date: 2026-09-02
 tags: [RL, GSPO, NVFP4, judges]
 image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/ar-rl/thumb-sketch.png
