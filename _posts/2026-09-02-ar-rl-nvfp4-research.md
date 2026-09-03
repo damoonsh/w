@@ -58,8 +58,60 @@ description: "Mid-build notes on training mid-size NVFP4 models on LLM research 
   font-size: 0.95em;
   line-height: 1.5;
 }
+.ar-mcp-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.7rem;
+  margin: 1.2rem auto 1.7rem;
+  max-width: 1080px;
+  align-items: stretch;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+.ar-mcp-card {
+  flex: 1 1 0;
+  min-width: 200px;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--text-muted) 28%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ar-mcp-card header {
+  font-size: 0.72em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.65rem 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 22%, transparent);
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.ar-mcp-card header b {
+  color: var(--text);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1.08em;
+}
+.ar-mcp-card pre {
+  margin: 0;
+  padding: 0.55rem 0.65rem 0.7rem;
+  font-size: 0.68em;
+  line-height: 1.4;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+}
+.ar-mcp-card .q { color: #8a3a32; }
+.ar-mcp-card .k { color: #2f4a5c; }
+.ar-mcp-card .ok { color: #3a6b4a; }
 @media (max-width: 700px) {
   .ar-row-2 { flex-direction: column; }
+  .ar-mcp-row { flex-wrap: wrap; }
+  .ar-mcp-card { flex: 1 1 240px; }
 }
 </style>
 
@@ -231,7 +283,75 @@ Resolve maps that quote onto the packed thinking tokens. Mean span length on the
 Resolve status is not a quality grade. Unresolved means the host could not land the quote on supervised tokens — often because the timeline shows bash and the packed row shows tool XML. The passage is dropped. Inventing a nearby span would be worse.
 </div>
 
-Judge orchestration is itself an OpenCode session: parent plan → one sub-agent per segment, each walking the archive in small timeline windows and appending JSON as it goes. I do not want a one-shot dump of a 300-turn tweak.
+Judge orchestration is itself an OpenCode session: parent plan → one sub-agent per segment, each walking the archive in small timeline windows and appending JSON as it goes. I do not want a one-shot dump of a 300-turn tweak. That walk is not `grep` on the workspace. It is a **meta-session**: a second OpenCode process whose only evidence channel is MCP, pointed at the archived episode DB.
+
+# MCP meta-session
+
+The judge process has its own XDG / SQLite so it cannot overwrite the rollout it is scoring. `OPENCODE_DB` on the MCP server is the **archive**. The parent orchestrator is not allowed to call the tools or write passages. Each child owns one `mcp_query` (one OpenCode session title) and has to cover that session in windows, not one 300-line dump.
+
+The server is small on purpose. Three endpoints:
+
+| Tool | Returns | What it is for |
+|---|---|---|
+| `session_timeline` | blockquote lines + a `> QUOTE:` twin | the actual training locators |
+| `list_child_sessions` | JSON children of a parent id | main → digest / tweak map |
+| `list_sessions` | JSON catalog (legacy `kr-c*` titles) | Kag-style listing; **not** for `aj-*` |
+
+`session_timeline` is the one that matters. `query` is a title substring (`aj-c2-tweak`). `filter` is `all` / `thinking` / `tool` / `read` / `msg`. `order` is `first` or `last`. `n` is the line window (start at 40). `trunc` stays 0 so the `> QUOTE:` body is the full string the host will later resolve onto packed tokens. Display lines may ellipsis; the quote line must not, or hit-rate dies.
+
+I am putting **alphaXiv** on the same MCP bus. The research agent (especially scratch / inception) should be able to `discover_papers` / `get_paper_content` instead of inventing citations when it writes a digest. The judge can then quote whether a hypothesis actually came from a paper or from a hallucinated abstract. Same contract as `sessions_meta`: structured tool args, small windows, verbatim quotes if those tokens should move.
+
+<div class="ar-mcp-row" aria-label="example MCP endpoint returns">
+<figure class="ar-mcp-card">
+<header><b>session_timeline</b> · filter=all n=8</header>
+<pre><span class="k">## aj-c2-tweak (@build)</span>
+> THINKING: I should drop HEAD_TYPE…
+<span class="q">> QUOTE: I should drop HEAD_TYPE and keep POOL=mean</span>
+> TOOL CALL: edit <span class="ok">iter-2/train_jepa.py</span>
+<span class="q">> QUOTE: iter-2/train_jepa.py</span>
+> TOOL CALL: bash uv run train…
+<span class="q">> QUOTE: uv run python train_jepa.py</span>
+> MSG: "keep · val_mse 0.041"
+<span class="q">> QUOTE: keep · val_mse 0.041</span></pre>
+</figure>
+<figure class="ar-mcp-card">
+<header><b>list_child_sessions</b> · parent orch</header>
+<pre>{
+  <span class="k">"parent_session_id"</span>: "ses_e00",
+  <span class="k">"n"</span>: 3,
+  <span class="k">"children"</span>: [
+    { "title": <span class="ok">"aj-c0-digest"</span> },
+    { "title": <span class="ok">"aj-c1-tweak"</span> },
+    { "title": <span class="ok">"aj-c2-tweak"</span> }
+  ]
+}</pre>
+</figure>
+<figure class="ar-mcp-card">
+<header><b>list_sessions</b> · cycle=2 n=2</header>
+<pre>{
+  <span class="k">"pattern"</span>: <span class="ok">"%kr-c2%"</span>,
+  <span class="k">"n"</span>: 2,
+  <span class="k">"sessions"</span>: [
+    { "title": "kr-c2-i01-iterate" },
+    { "title": "kr-c2-w1-i02-write" }
+  ]
+}</pre>
+</figure>
+<figure class="ar-mcp-card">
+<header><b>alphaxiv.discover_papers</b> · mix-in</header>
+<pre>1. <span class="ok">[ID=2507.18071]</span> GSPO
+   sequence-level IS · MoE-stable
+2. <span class="ok">[ID=2603.24044]</span> MoE-Sieve
+   hot-25% expert LoRA
+3. <span class="ok">[ID=2607.25659]</span> CoRT
+   token rubric, not a scalar
+
+<span class="k">get_paper_content</span> → report
+<span class="k">list_library</span> → folders</pre>
+</figure>
+</div>
+
+The row is the contract I want the model to internalize. Left card: every scored span starts life as a `> QUOTE:` line. Middle two: session graph, not file paths. Right: papers as IDs the digest can actually fetch. If the judge quotes a paper title that never appeared in an alphaXiv tool result, that is a `hypothesis` penalty, same as a bad knob bet.
 
 ## How that sits next to recent work
 
@@ -319,6 +439,8 @@ Out of scope, on purpose: DR-LoRA, dynamic rank, packing only hot rows into a sm
 | scratch + inception envs | working, not the long run yet |
 | classic `gspo` + channel judge + GDPO logs | working |
 | unified span judge / resolve / window blend | working |
+| `sessions_meta` MCP (timeline / children / list) | working (judge meta-session) |
+| alphaXiv MCP on the research + judge bus | **in the mix next** |
 | offline span score on archived rollouts | working (hit-rate is the gate) |
 | entropy viewer + span stars | working |
 | Jacobian-lens probe (base vs CARE vs last-4) | working, offline |
