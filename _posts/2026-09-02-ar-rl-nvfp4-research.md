@@ -348,17 +348,18 @@ The row is the contract I want the model to internalize. Left card: every scored
 
 I pointed `sessions_meta` at the archived episode DBs (CARE-LoRA Qwen run, the first Qwen run, Ornith shakeout) and walked each parent → children → `session_timeline` the way the judge does. Titles plus `> QUOTE:` lines plus the TSV keep/discard column reconstruct the bets. Same three ideas keep coming back. Only one ladder beat naive by a lot.
 
-The keep ladder is narrow: **full-budget transformer + `domain_wise` (or `batch_wise`) + CNN head**, then width, then **finer patches** (410k, best in these archives). Everything else is a rerun or a wrapper around a dead seed.
+The keep ladder that *compounds* is narrow: **full-budget transformer + `domain_wise` (or `batch_wise`) + CNN head**, then width, then **finer patches** (410k, best in these archives). Drop-crypto is the other “win,” once — CARE e01’s 1.07M four-domain run — and then it gets replayed as if it were the ladder.
 
 | Idea | Where | Outcome |
 |---|---|---|
 | CNN head on a transformer | CARE e00–e02; Qwen e01–e02 | **Keep** once the encoder already beat naive (Qwen e01 1.38M → **863k**; CARE e02 1.20M). Discard on a dead baseline |
 | `NORMALIZE_MODE` `domain_wise` / `batch_wise` vs `global` | all three runs | **Keep** with a working CNN + full budget. **`global` is poison** (Ornith 63M) |
-| Drop crypto / climate-only / MSFT-only | CARE e00/e01/e03; Qwen e00/e03; Ornith | **Discard everywhere.** Train filter does not change the eval mix |
-| Tiny encoder (`D_MODEL` 32–64) | CARE e01–e02; Ornith | Discard. Smaller does not fix a bad domain mix |
-| Scale first (`D_MODEL` 192–512) | Qwen episodes | **Keep only after a beating-naive seed** (661k → 598k). As a first bet: 17–40M or timeout |
+| Drop crypto / climate-only / MSFT-only | CARE e00–e03; Qwen e00/e03; Ornith | Usually **discard**. One exception: CARE e01 four-domain no-crypto **1.07M** beat naive. CARE e00 had already written “crypto must stay” |
+| Tiny encoder (`D_MODEL` 32–64) | CARE e01–e03; Ornith | Discard. Smaller does not fix a bad domain mix |
+| Scale first (`D_MODEL` 192–512) | Qwen; CARE e00/e01 | **Keep only after a beating-naive seed** (661k → 598k). CARE e00: 17.7M. Qwen e03: timeout |
 | `mamba` / `transmamba` | Qwen e02 | Discard (933k / 2.49M vs 661k transformer) |
-| `flatfnn` / block mask / `PRED_LAYERS=2` smoke | CARE + Qwen | Discard (block mask −61% vs 863k; smoke 51.5M) |
+| Block mask | Qwen e01; CARE e01 | **Discard** on the 863k seed (−61%). Bundled with drop-crypto on CARE e01, so the win is not “masking works” |
+| `flatfnn` / `PRED_LAYERS=2` smoke | CARE + Qwen | Discard (smoke 51.5M) |
 | Finer patches `PATCH_LEN=8`, `NUM_PATCH=64` | Qwen e02 | **Keep — 410k** |
 | Loss clamp / fake rolling-median / attn pool + joint FT | Ornith; Qwen e00 | Discard. Rolling-median v2 was `sort()[mid]` |
 
@@ -372,18 +373,19 @@ The program says: after a promising keep, take the next digest idea; after the s
 
 **Pivot away from a keep** is mixed. Same e01, after 863k: block masking (1.39M, discard) then `flatfnn` (3.18M, discard). Those were real other categories, not drop-crypto in a wig. CARE e02 after a 1.20M keep immediately left the recipe: two-domain shrink (4.09M), wider CNN (3.43M), `flatfnn` (5.56M). They had the ladder and walked off it.
 
-**Return after failure, with a new wrapper**, is the default on dead seeds. Ornith: `global` + crypto+energy 63M → shrink + `batch_wise` 51M → “broader mix” that still leaves crypto on eval, 37M. CARE e01: 3.4M all-seven → tiny 5.9M → climate-only 2.60M. The idea is still “change the train mix / shrink the net.” The ~2× soft-pivot never fires across episode boundaries.
+**Return after failure, with a new wrapper**, is the default on dead seeds. Ornith: `global` + crypto+energy 63M → shrink + `batch_wise` 51M → “broader mix” that still leaves crypto on eval, 37M. CARE e01 spent four discards on mix/size before the parent said “different approach entirely” (CNN) — and the beat-naive row was still a no-crypto mix. CARE e03 said “Pivot: iter-4 same setup as iter-1 + attn” and ran finance+climate **three times**. Soft-pivot is a sentence. The next train is the same category.
 
-**Return after success, to a discarded idea**, happens when the next episode forgets. Qwen e03 opens as greenfield, times out a 512-wide first bet, then trains energy+web+climate+tesla only (7.6M). CARE e00’s digest had already written that removing crypto *destroyed* val because eval still has crypto. Later episodes propose it anyway. The digest keeps doing it because climate train MSE looks pretty.
+**After a keep, they usually do not jump back to drop-crypto in that same episode.** They stay and scale (Qwen e01/e02) or leave to a *new* category (block mask, mamba). The exception is CARE e02: 1.20M CNN keep, then finance+crypto + tiny MLP. Cross-episode is where the discarded family comes back. Qwen e03 opens as greenfield, times out a 512-wide first bet, then trains energy+web+climate+tesla only (7.6M). CARE e00 wrote that removing crypto *destroyed* val; e01/e03 run it anyway.
 
 | After | What they did | Example |
 |---|---|---|
 | Keep that beat naive | Escalate same axis | Qwen e01 1.38M → 863k; e02 661k → 598k → 410k |
 | Keep that beat naive | Pivot to a *new* category | e01 block mask, then `flatfnn` (both discard) |
 | Keep that beat naive | Abandon the recipe | CARE e02 1.20M → 2-domain / wider / `flatfnn` |
+| Keep that never beat naive | Still try drop-crypto next | CARE e00 3.31M (+73% vs naive) → 5.73M |
 | Failed encoder pivot | Return to the keep axis | e02 mamba 933k → transformer 598k |
-| Discard, same episode | Wrapper retry, not a pivot | Ornith shrink / re-norm / “broader mix” |
-| Discard, next episode | Replay the discarded family | drop-crypto on CARE e01/e03, Qwen e00/e03, Ornith |
+| Discard, same episode | Wrapper retry; 2× rule is verbal | Ornith 63→51→37M; CARE e03 finance+climate ×3 |
+| Discard, next episode | Replay the discarded family | drop-crypto / tiny net on CARE e01–e03, Qwen e03, Ornith |
 
 So: they *do* return to ideas, including after a keep. The useful return is “come back to the transformer after mamba.” The useless return is “drop crypto again because this episode’s SUMMARY is empty.” Span credit should quote those two differently.
 
@@ -393,7 +395,7 @@ I asked the digest to keep a running picture of idea *categories* and diversity 
 
 The digest template already asks for `gaps`, `retrial_candidates`, and 3–8 concrete ideas with a seed. Some episodes added a **knob-surface** table (`Category | Key knobs | Values`: encoder, data mix, normalisation, geometry, head, …). Others wrote “architecture diversity unexplored” or “Retrial candidates: none — no stale retrials.” CARE e00 even said the right sentence: *focus on novel axes rather than re-running existing configs which are well-characterized.*
 
-None of that bound the orchestrator. The table catalogs the *API*, not the *tried set*. “Unexplored” on a resume episode still lists masking, mamba, patch geometry — and the next cycle is another `TRAIN_DOMAINS` filter. Qwen e01’s digest claimed no stale retrials (block mask and `flatfnn` had “clear technical reasons”) and still put “fewer but targeted domains” on the next-session menu. A later episode then ran it. Ornith’s gaps listed loss weighting and quantile SSL; the children ran clamp and a broken rolling median.
+None of that bound the orchestrator. There is no durable category×coverage table — only `gaps` + `retrial_candidates` + Idea 1…N. `retrial_candidates: none` is the usual line. CARE e00’s second digest *did* pick lower LR after writing “no novel axes (mask, attn pool) explored” — one table-aligned choice — then later episodes still advertise mask/head/mamba and dispatch drop-crypto or a tiny net. Qwen e01 claimed no stale retrials and still put “fewer but targeted domains” on the next-session menu. Ornith’s gaps listed loss weighting and quantile SSL; the children ran clamp and a broken rolling median.
 
 | What I wanted | What they wrote | What they ran next |
 |---|---|---|
