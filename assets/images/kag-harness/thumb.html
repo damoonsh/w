@@ -15,80 +15,85 @@
   var c = document.getElementById('c');
   var ctx = c.getContext('2d');
   var W = 1280, H = 640;
+  var cx = 640, cy = 320, R = 178;
 
   function noise() {
     var img = ctx.createImageData(W, H);
     var d = img.data;
     for (var i = 0; i < d.length; i += 4) {
-      var n = 18 + Math.random() * 14;
-      d[i] = 43 + n; d[i + 1] = 45 + n; d[i + 2] = 53 + n; d[i + 3] = 255;
+      var n = 14 + Math.random() * 14;
+      d[i] = 40 + n; d[i + 1] = 43 + n; d[i + 2] = 52 + n; d[i + 3] = 255;
     }
     ctx.putImageData(img, 0, 0);
   }
 
-  function stroke(color, width, points, wobble) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+  function hexPts(r, wobble) {
+    var pts = [];
+    for (var i = 0; i < 6; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 3;
+      pts.push([
+        cx + r * Math.cos(a) + (Math.random() - 0.5) * wobble,
+        cy + r * Math.sin(a) + (Math.random() - 0.5) * wobble
+      ]);
+    }
+    return pts;
+  }
+
+  function poly(pts) {
     ctx.beginPath();
-    for (var i = 0; i < points.length; i++) {
-      var x = points[i][0] + (Math.random() - 0.5) * wobble;
-      var y = points[i][1] + (Math.random() - 0.5) * wobble;
+    for (var i = 0; i < pts.length; i++) {
+      var x = pts[i][0] + (Math.random() - 0.5) * 0.9;
+      var y = pts[i][1] + (Math.random() - 0.5) * 0.9;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
-    ctx.stroke();
+    ctx.closePath();
   }
 
   noise();
 
-  ctx.strokeStyle = 'rgba(168,198,232,0.06)';
-  ctx.lineWidth = 1;
-  for (var y = 80; y < H; y += 36) {
-    ctx.beginPath();
-    ctx.moveTo(40, y);
-    ctx.lineTo(W - 40, y);
-    ctx.stroke();
-  }
+  // dusk blue, not Kaggle #20BEFF
+  var fill = '#2f6f96';
 
-  // conservative path — keeps going, shallow
-  stroke('rgba(122,175,212,0.88)', 2.6, [
-    [160, 430], [280, 400], [400, 390], [520, 370], [680, 355], [840, 340], [1040, 328]
-  ], 5);
+  poly(hexPts(R, 2.4));
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(186, 214, 230, 0.35)';
+  ctx.lineWidth = 2.4;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
 
-  // ambitious path — dives, then abandoned (stops mid-canvas)
-  stroke('rgba(212,138,138,0.78)', 2.3, [
-    [160, 430], [260, 360], [340, 250], [420, 180], [500, 220], [560, 410]
-  ], 6);
+  ctx.fillStyle = '#eef5f8';
 
-  // early-exit tick marks — sessions that HANDOFF
-  ctx.fillStyle = 'rgba(232,184,109,0.55)';
-  var xs = [360, 480, 560, 620];
-  for (var i = 0; i < xs.length; i++) {
-    ctx.fillRect(xs[i] + Math.random() * 4, 300 + Math.random() * 18, 8, 26);
-  }
+  // Official-ish Kaggle K, slightly sketched
+  // left arrowhead
+  poly([
+    [cx - 58, cy],
+    [cx - 8, cy - 68],
+    [cx + 16, cy - 48],
+    [cx - 18, cy],
+    [cx + 16, cy + 48],
+    [cx - 8, cy + 68]
+  ]);
+  ctx.fill();
 
-  function box(x, y, w, h, color) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(x + 4, y);
-    ctx.lineTo(x + w, y + 2);
-    ctx.lineTo(x + w - 3, y + h);
-    ctx.lineTo(x, y + h - 3);
-    ctx.closePath();
-    ctx.stroke();
-  }
-  // slot boxes
-  box(190, 165, 150, 78, 'rgba(216,220,232,0.32)');
-  box(370, 150, 150, 78, 'rgba(122,175,212,0.42)');
-  box(550, 168, 150, 78, 'rgba(232,184,109,0.38)');
-  box(730, 155, 150, 78, 'rgba(212,138,138,0.35)');
+  // upper bar
+  poly([
+    [cx + 2, cy - 14],
+    [cx + 28, cy - 58],
+    [cx + 64, cy - 58],
+    [cx + 24, cy - 6]
+  ]);
+  ctx.fill();
 
-  ctx.fillStyle = 'rgba(143,150,170,0.55)';
-  ctx.font = '18px ui-serif, Georgia, serif';
-  ctx.fillText('stop short', 200, 560);
+  // lower bar
+  poly([
+    [cx + 2, cy + 14],
+    [cx + 24, cy + 6],
+    [cx + 64, cy + 58],
+    [cx + 28, cy + 58]
+  ]);
+  ctx.fill();
 })();
 </script>
 </body>
