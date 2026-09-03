@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>thumbnail sketch</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 1200px; height: 630px; overflow: hidden; }
+    body { background: #efe6d6; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="c" width="1200" height="630"></canvas>
+<script>
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
+const W = 1200, H = 630;
+
+function paper() {
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, "#f3ead8");
+  g.addColorStop(1, "#e4d6be");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  // grain
+  for (let i = 0; i < 9000; i++) {
+    const x = Math.random() * W, y = Math.random() * H;
+    ctx.fillStyle = `rgba(80,60,40,${0.015 + Math.random() * 0.03})`;
+    ctx.fillRect(x, y, 1.2, 1.2);
+  }
+}
+
+function stroke(fn, color, w, alpha) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.lineWidth = w;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  fn(ctx);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function wobbleLine(x1, y1, x2, y2, n, amp) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const x = x1 + (x2 - x1) * t + (Math.random() - 0.5) * amp;
+    const y = y1 + (y2 - y1) * t + (Math.random() - 0.5) * amp;
+    pts.push([x, y]);
+  }
+  return (ctx) => {
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  };
+}
+
+paper();
+
+// faint ruled lines
+for (let y = 70; y < H - 40; y += 28) {
+  stroke(wobbleLine(48, y, W - 48, y, 18, 1.4), "#8b7355", 0.7, 0.18);
+}
+
+// left: stacked "sessions" as loose rectangles
+const sessions = [
+  { x: 70, y: 90, w: 210, h: 130, label: "" },
+  { x: 95, y: 240, w: 210, h: 150 },
+  { x: 70, y: 410, w: 230, h: 140 },
+];
+sessions.forEach((s, i) => {
+  stroke((ctx) => {
+    const j = 3.5;
+    ctx.moveTo(s.x + Math.random()*j, s.y + Math.random()*j);
+    ctx.lineTo(s.x + s.w + Math.random()*j, s.y + Math.random()*j);
+    ctx.lineTo(s.x + s.w + Math.random()*j, s.y + s.h + Math.random()*j);
+    ctx.lineTo(s.x + Math.random()*j, s.y + s.h + Math.random()*j);
+    ctx.closePath();
+  }, "#3d3226", 1.7, 0.75);
+  // inner ticks = cycles
+  const ticks = 3 + i;
+  for (let k = 0; k < ticks; k++) {
+    const yy = s.y + 28 + k * ((s.h - 40) / ticks);
+    stroke(wobbleLine(s.x + 18, yy, s.x + s.w - 22, yy, 8, 2), "#5a4634", 1.1, 0.45);
+  }
+});
+
+// connecting scribbles toward center
+stroke((ctx) => {
+  ctx.moveTo(300, 160);
+  ctx.bezierCurveTo(380, 150, 420, 220, 500, 250);
+}, "#3d3226", 1.5, 0.55);
+stroke((ctx) => {
+  ctx.moveTo(310, 320);
+  ctx.bezierCurveTo(400, 310, 430, 280, 510, 270);
+}, "#3d3226", 1.5, 0.55);
+stroke((ctx) => {
+  ctx.moveTo(310, 480);
+  ctx.bezierCurveTo(400, 430, 450, 360, 520, 300);
+}, "#3d3226", 1.5, 0.55);
+
+// center: a quoted span — a circled fragment of a token row
+const tokens = [];
+const tx0 = 430, ty = 250;
+for (let i = 0; i < 11; i++) {
+  tokens.push({ x: tx0 + i * 42, y: ty, hot: i >= 4 && i <= 7 });
+}
+tokens.forEach((t) => {
+  stroke((ctx) => {
+    ctx.moveTo(t.x, t.y);
+    ctx.lineTo(t.x + 28, t.y);
+    ctx.lineTo(t.x + 28, t.y + 36);
+    ctx.lineTo(t.x, t.y + 36);
+    ctx.closePath();
+  }, t.hot ? "#8a3a32" : "#3d3226", t.hot ? 2.1 : 1.2, t.hot ? 0.85 : 0.35);
+  if (t.hot) {
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = "#c45c4a";
+    ctx.fillRect(t.x, t.y, 28, 36);
+    ctx.restore();
+  }
+});
+
+// messy circle around the hot tokens
+stroke((ctx) => {
+  const cx = 620, cy = 268, rx = 98, ry = 58;
+  ctx.moveTo(cx + rx, cy);
+  for (let a = 0; a <= Math.PI * 2 + 0.2; a += 0.18) {
+    const jx = (Math.random() - 0.5) * 8;
+    const jy = (Math.random() - 0.5) * 8;
+    ctx.lineTo(cx + Math.cos(a) * rx + jx, cy + Math.sin(a) * ry + jy);
+  }
+}, "#8a3a32", 2.0, 0.7);
+
+// right: faint expert "sieve" — many small boxes, a few filled
+for (let r = 0; r < 6; r++) {
+  for (let col = 0; col < 5; col++) {
+    const x = 940 + col * 38, y = 120 + r * 62;
+    const hot = (r + col) % 4 === 0 || (r === 2 && col === 1) || (r === 4 && col === 3);
+    stroke((ctx) => {
+      ctx.rect(x + Math.random()*2, y + Math.random()*2, 26, 40);
+    }, hot ? "#2f4a5c" : "#3d3226", hot ? 1.8 : 0.9, hot ? 0.75 : 0.28);
+    if (hot) {
+      ctx.save();
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "#2f4a5c";
+      ctx.fillRect(x, y, 26, 40);
+      ctx.restore();
+    }
+  }
+}
+
+// arrow from quote to sieve
+stroke((ctx) => {
+  ctx.moveTo(740, 270);
+  ctx.bezierCurveTo(820, 250, 860, 300, 920, 310);
+}, "#3d3226", 1.4, 0.45);
+
+// tiny annotation ticks (no readable words — sketch only)
+stroke(wobbleLine(430, 330, 690, 338, 10, 2.5), "#8a3a32", 1.0, 0.5);
+stroke(wobbleLine(80, 70, 200, 66, 8, 2), "#3d3226", 1.0, 0.35);
+stroke(wobbleLine(940, 88, 1080, 84, 8, 2), "#2f4a5c", 1.0, 0.4);
+</script>
+</body>
+</html>
