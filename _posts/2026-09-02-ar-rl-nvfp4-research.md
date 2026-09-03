@@ -353,6 +353,33 @@ I am putting **alphaXiv** on the same MCP bus. The research agent (especially sc
 
 The row is the contract I want the model to internalize. Left card: every scored span starts life as a `> QUOTE:` line. Middle two: session graph, not file paths. Right: papers as IDs the digest can actually fetch. If the judge quotes a paper title that never appeared in an alphaXiv tool result, that is a `hypothesis` penalty, same as a bad knob bet.
 
+# Ideas the agents actually tried
+
+I pointed `sessions_meta` at the archived episode DBs (CARE-LoRA Qwen run, the first Qwen run, Ornith shakeout) and walked each parent → children → `session_timeline` the way the judge does. Titles plus `> QUOTE:` lines plus the TSV keep/discard column are enough to reconstruct the bets. Same three ideas keep coming back. Only one ladder actually beat naive by a lot.
+
+| Idea | Where | Outcome | What they said |
+|---|---|---|---|
+| **CNN head** on a transformer | CARE e00–e02; Qwen e01–e02 | **Keep** when the encoder already beat naive (Qwen e01 1.38M → **863k**; CARE e02 1.20M). Discard when stacked on a dead baseline | *“Transformer d=128/l=4/cnn head trained on all 7 domains beats naive; crypto dominates MSE”* |
+| **`NORMALIZE_MODE`**: `domain_wise` / `batch_wise` vs `global` | all three runs | **Keep** with a working CNN + full step budget. **`global` is poison** (Ornith 63M; CARE no-crypto+global 5.7M) | *“crypto dominates eval MSE and domain_wise … provided useful domain-aware scaling during SSL”* |
+| **Drop crypto from `TRAIN_DOMAINS`** | CARE e00/e01/e03; Qwen e00/e03; Ornith | **Discard everywhere.** Train-set filter does not change the eval mix | *“Low-volatility train-domains … climate/microsoft ~k MSE but crypto=225M … blended val_mse at 37M vs naive 1.5M”* |
+| Climate-only `TRAIN_INDICES` | CARE e01 | Discard, 2.60M vs naive 1.21M | *“batch_wise … MSE=2.6M worse than naive 1.2M — discard”* |
+| MSFT-only / MSFT+TSLA + `flatfnn` | CARE e03; Qwen e00 | Discard (5.4M / 12.0M) | *“Transformer(64/2/4) on MSFT only … third consecutive discard”* |
+| Tiny encoder (`D_MODEL` 32–64, 2 layers) | CARE e01–e02; Ornith | Discard. Smaller does not fix a bad domain mix (Ornith still 51M) | *“halving d_model=32 … still yields val_mse=51M on crypto+energy”* |
+| Scale first (`D_MODEL` 192–512, 6–10 layers) | all Qwen episodes | **Keep only after a beating-naive seed** (Qwen e02 661k → 598k). As a first bet: 17–40M or **timeout** | *“Training timed out with d_model=512, 6-layer transformer before producing eval metrics”* |
+| `ENCODER_TYPE=mamba` then `transmamba` | Qwen e02 | Discard. Mamba 933k vs transformer 661k; transmamba 2.49M | *“pure SSM without attention less effective for time-series forecasting”* |
+| `HEAD_TYPE=flatfnn` | CARE e01–e03; Qwen e00–e01 | Usually discard. Crypto mse 33M on one “all-7 domains” try | *“flatfnn … collapsed on crypto outlier (mse=33M); 3.6x worse than cnn baseline”* |
+| Block masking vs random `MASK_RATIO` | Qwen e01 | Discard, 1.39M vs 863k (−61%) | *“Block masking + wider transformer … yield val_mse=1386183 vs iter-3's 863171”* |
+| Finer patches `PATCH_LEN=8`, `NUM_PATCH=64` | Qwen e02 | **Keep — 410k**, best number in these archives | *“Finer patch granularity … beat iter-5 by 31% (598k→410k)”* |
+| Coarser patches / `NUM_PATCH` 15→8 on a broken seed | Ornith | Still ~37M. Session then drowned in stride arithmetic | *“Reduce from 16→4 to decrease per-patch prediction scope”* |
+| `PRED_LAYERS=2` smoke (200+200 steps) | Qwen e02 | Discard, 51.5M vs 598k | *“PRED_LAYERS=2 … val_mse=51.5M (far worse than naive 1.98M)”* |
+| Loss clamp (`MAX_SAMPLE_LOSS_THRESHOLD=10` × median) | Ornith | Discard, 41.3M vs 37M | *“Loss clamping at 10x median … no isolated A/B possible from re-init”* |
+| Rolling-median preprocess (window 16) | Ornith, then a **v2** child | First pass implemented sort-the-center, not a rolling median. Last TSV ~28M | *“Using sort and indexing the center element gives a median, not a rolling median.”* |
+| Joint FT + `POOL=attn` / decoupled `FC_LR` | Qwen e00; CARE e00/e03 | Discard. Best-in-episode 3.25M still > naive 2.0M | *“attn pool backfired — val_mse=4.1M > naive 2.0M … despite 3x params”* |
+
+The keep ladder that actually moved the number is narrow: **full-budget transformer + `domain_wise` (or `batch_wise`) + CNN head**, then width, then **finer patches**. Everything else is a rerun. Drop-crypto is the clearest “discarded then retried on the next episode” loop — the digest keeps proposing it because train MSE on climate looks pretty.
+
+Protocol waste shows up in the same timelines: overwrite `iter-0` instead of opening `iter-N`, search-replace that deletes `HEAD_TYPE`/`POOL`, a “rolling median” that is just `sort()[mid]`, comma vs tab TSV rows, and a 512-wide transformer that eats the wall clock with no smoke budget. Those are the spans I want the judge to quote. The 410k patch run is the span I want to up-weight.
+
 ## How that sits next to recent work
 
 Rubric-as-reward has become the default for open-ended post-training. [Rubric-Grounded RL](https://www.alphaxiv.org/abs/2605.08061) and [RUBRIC-ARROW](https://www.alphaxiv.org/abs/2605.29156) decompose a response into weighted criteria and let a judge score them — partial credit instead of a binary outcome. [Many Voices, One Reward](https://www.alphaxiv.org/abs/2607.01830) generates those rubrics from several roles so one judge is less of a monoculture. That is the channel-judge half of my stack: protocol / hypothesis / self-correction as named heads.
@@ -439,7 +466,7 @@ Out of scope, on purpose: DR-LoRA, dynamic rank, packing only hot rows into a sm
 | scratch + inception envs | working, not the long run yet |
 | classic `gspo` + channel judge + GDPO logs | working |
 | unified span judge / resolve / window blend | working |
-| `sessions_meta` MCP (timeline / children / list) | working (judge meta-session) |
+| `sessions_meta` MCP (timeline / children / list) | working (judge meta-session; used to catalog bets across runs) |
 | alphaXiv MCP on the research + judge bus | **in the mix next** |
 | offline span score on archived rollouts | working (hit-rate is the gate) |
 | entropy viewer + span stars | working |
