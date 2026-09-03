@@ -3,7 +3,7 @@ title: "Plan-tuning mid-size models"
 date: 2026-09-02
 tags: [RL, GSPO, NVFP4, judges]
 image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/ar-rl/thumb-sketch.png
-description: "Mid-build notes on training mid-size NVFP4 models on LLM research traces: mixed-session rollouts, span-level token updates, an LLM judge that quotes the cause, and a MoE-Sieve plan for later."
+description: "Mid-build notes on training mid-size NVFP4 models on LLM research traces: span-level token updates, what archived agents actually retried after keep/discard, and a MoE-Sieve plan for later."
 ---
 
 <style>
@@ -117,15 +117,11 @@ description: "Mid-build notes on training mid-size NVFP4 models on LLM research 
 
 This is a mid-build note, not a finished bake-off. The bet is: take mid-size models that already fit NVFP4 on one box, put them in a real research loop (not GSM8K), and update **specific tokens** instead of smearing one episode score across every word they typed.
 
-The task world is LLM research. An OpenCode agent team tries to lower JEPA `val_mse`. A second model reads the archive and quotes the spans that caused the credit or the blame. Those quotes become the training targets. I intend to run the same loop on several mid-size checkpoints — Gemma 4 E4B / 12B, Qwen3.6-35B-A3B, GLM-4.7 Flash, Nemotron 3 Nano, Ornith. For Ornith-1.0-9B I did the NVFP4 conversion myself (Model Optimizer), so the serve weights and the train adapters are the same nibble format I will use on the others.
+Most open RL still looks like contest math. Sample a group, score the final answer, push GRPO. That is a good interface when the answer is a letter. It is a bad one when the thing you care about is *how* a research agent spent two hours: which hypothesis it formed, whether main respawned a broken digest, whether a tweak edited the boilerplate instead of the per-iter script.
 
-# Introduction
+I have been wiring that second interface. An OpenCode team tries to lower JEPA `val_mse`. A second model reads the archive and quotes the spans that caused the credit or the blame. Those quotes are the training targets. Serve is Docker vLLM on NVFP4; train is TRL GSPO / GRPO against the same endpoint, LoRA only. I intend the same loop on Gemma 4 E4B / 12B, Qwen3.6-35B-A3B, GLM-4.7 Flash, Nemotron 3 Nano, Ornith. For Ornith-1.0-9B I did the NVFP4 conversion myself (Model Optimizer).
 
-Most open RL for language models still looks like contest math. Sample a group, score the final answer, push GRPO. That is a good interface when the answer is a letter or a boxed integer. It is a bad interface when the thing you care about is *how* a research agent spent two hours: which hypothesis it formed, whether main respawned a broken digest, whether a tweak cycle edited the boilerplate instead of the per-iter script.
-
-I have been wiring that second interface. Serve is Docker vLLM on NVFP4. Train is TRL GSPO / GRPO against the same endpoint, LoRA only, base weights frozen and quantized. The episode is an OpenCode session over auto-jepa — and two scratch variants whose whole point is that the model has to *design the harness*, not follow a printed workflow.
-
-I am not done. Classic segment GSPO still exists. Span-level training is the default in config and has been scored on archived rollouts; a full on-policy NVFP4 run that lives on judge quotes is still the thing I am putting together. This post is the stack, the algorithms, and why the judge looks the way it does.
+Classic segment GSPO still exists. Span-level is the default in config and has been scored on archived rollouts. A full on-policy NVFP4 run that lives on judge quotes is still the thing I am putting together. This post is the stack, then what those archives actually did with their ideas.
 
 <figure class="ar-fig">
   <img src="{{ '/assets/images/ar-rl/pipeline.png' | relative_url }}" alt="Episode to segments to span judge to token resolve to GSPO LoRA"/>
@@ -142,11 +138,7 @@ A math rollout is one chain of thought and a check. A research episode is a smal
 
 Those roles are not decoration. They fail in different ways. Main can hand off a garbage prompt and then “fix it in place.” Digest can skip `SUMMARY.md`. Tweak can form a decent hypothesis and then blow the edit (drop `HEAD_TYPE`, loop on the same `pkill`). If you collapse the whole episode to `0.45 · JEPA + 0.35 · process + …`, you have already thrown away which tokens were the decision.
 
-That is the same complaint the last year of GRPO variants keep making, just not on AIME. [GRPO](https://www.alphaxiv.org/abs/2402.03300) / [R1](https://www.alphaxiv.org/abs/2501.12948) give every token in a response the group advantage. [GSPO](https://www.alphaxiv.org/abs/2507.18071) says the importance ratio should be the *sequence*, because the reward is for the answer and token-level ratios go insane on MoE. [Beyond the 80/20 Rule](https://www.alphaxiv.org/abs/2506.01939) says most tokens were never forks. [GTPO / GRPO-S](https://www.alphaxiv.org/abs/2508.04349) reshape that coarse advantage with entropy. [GDPO](https://www.alphaxiv.org/abs/2601.05242) refuses to add reward heads before normalizing them.
-
-Agent papers are louder about the same hole. [TRACE](https://www.alphaxiv.org/abs/2607.13988) and [TRCA](https://www.alphaxiv.org/abs/2608.16156) try to put credit on turns or transitions instead of the terminal score. [TRIAGE](https://www.alphaxiv.org/abs/2606.32017) types the actions first. [CoRT](https://www.alphaxiv.org/abs/2607.25659) is the closest cousin to what I want: rubric judgments that do not get flattened back into one scalar before the policy step.
-
-I am not implementing those papers. They are why `algorithm: span_level` exists.
+The last year of GRPO-family papers is the same complaint, just not on AIME: too much of the update lands on tokens that were never the fork ([80/20](https://www.alphaxiv.org/abs/2506.01939), [GSPO](https://www.alphaxiv.org/abs/2507.18071)), or the terminal score arrives too late ([TRACE](https://www.alphaxiv.org/abs/2607.13988), [CoRT](https://www.alphaxiv.org/abs/2607.25659)). I am not implementing those papers. They are why `algorithm: span_level` exists. The citations sit later.
 
 # Mixed session shapes
 
@@ -160,7 +152,6 @@ episode_schedule:
     - [[3, 3], [1, 5]]
     # compact form: 2 sessions × 5 cycles, then 1×10, then 3×3
     - "2x5 + 1x10 + 3x3"
-    - [[4, 5], [3, 6]]
     # mix worlds inside one episode (env change = fresh sandbox)
     - phases:
         - { runs: 2, cycles: 3, env: auto-jepa }
@@ -177,7 +168,7 @@ This is the “research as training” part. I do not want another verifiable-ma
 
 The models I actually want to move are mid-size and already (or about to be) quantized. On a DGX Spark / GB10 box the weights are NVFP4 (E2M1 nibbles + FP8 scales). You do not materialize a BF16 shadow of a 30B MoE just to train LoRA.
 
-Ornith-1.0-9B is the shakeout because I converted it myself. If the conversion is wrong, I want to find that on a dense 9B before I spend a week on Qwen-35B-A3B or GLM Flash. The others are profiled the same way: Gemma 4 E4B / 12B, Qwen3.6-35B-A3B, GLM-4.7 Flash (± REAP), Nemotron 3 Nano 30B. Same serve container, same LoRA hot-reload name, different `model_profile`.
+Ornith-1.0-9B is the shakeout because I converted it myself. If the conversion is wrong, I want to find that on a dense 9B before I spend a week on Qwen-35B-A3B. Same serve container, same LoRA hot-reload name, different `model_profile`.
 
 Train keeps the base frozen and quantized; only BF16 adapters move. Serve and train talk to the same vLLM. Prompt tokens are rendered client-side and sent as token-in so the logprobs in the trajectory are the tokens the model actually ran, not a second Jinja pass that drifted.
 
@@ -355,32 +346,65 @@ The row is the contract I want the model to internalize. Left card: every scored
 
 # Ideas the agents actually tried
 
-I pointed `sessions_meta` at the archived episode DBs (CARE-LoRA Qwen run, the first Qwen run, Ornith shakeout) and walked each parent → children → `session_timeline` the way the judge does. Titles plus `> QUOTE:` lines plus the TSV keep/discard column are enough to reconstruct the bets. Same three ideas keep coming back. Only one ladder actually beat naive by a lot.
+I pointed `sessions_meta` at the archived episode DBs (CARE-LoRA Qwen run, the first Qwen run, Ornith shakeout) and walked each parent → children → `session_timeline` the way the judge does. Titles plus `> QUOTE:` lines plus the TSV keep/discard column reconstruct the bets. Same three ideas keep coming back. Only one ladder beat naive by a lot.
 
-| Idea | Where | Outcome | What they said |
-|---|---|---|---|
-| **CNN head** on a transformer | CARE e00–e02; Qwen e01–e02 | **Keep** when the encoder already beat naive (Qwen e01 1.38M → **863k**; CARE e02 1.20M). Discard when stacked on a dead baseline | *“Transformer d=128/l=4/cnn head trained on all 7 domains beats naive; crypto dominates MSE”* |
-| **`NORMALIZE_MODE`**: `domain_wise` / `batch_wise` vs `global` | all three runs | **Keep** with a working CNN + full step budget. **`global` is poison** (Ornith 63M; CARE no-crypto+global 5.7M) | *“crypto dominates eval MSE and domain_wise … provided useful domain-aware scaling during SSL”* |
-| **Drop crypto from `TRAIN_DOMAINS`** | CARE e00/e01/e03; Qwen e00/e03; Ornith | **Discard everywhere.** Train-set filter does not change the eval mix | *“Low-volatility train-domains … climate/microsoft ~k MSE but crypto=225M … blended val_mse at 37M vs naive 1.5M”* |
-| Climate-only `TRAIN_INDICES` | CARE e01 | Discard, 2.60M vs naive 1.21M | *“batch_wise … MSE=2.6M worse than naive 1.2M — discard”* |
-| MSFT-only / MSFT+TSLA + `flatfnn` | CARE e03; Qwen e00 | Discard (5.4M / 12.0M) | *“Transformer(64/2/4) on MSFT only … third consecutive discard”* |
-| Tiny encoder (`D_MODEL` 32–64, 2 layers) | CARE e01–e02; Ornith | Discard. Smaller does not fix a bad domain mix (Ornith still 51M) | *“halving d_model=32 … still yields val_mse=51M on crypto+energy”* |
-| Scale first (`D_MODEL` 192–512, 6–10 layers) | all Qwen episodes | **Keep only after a beating-naive seed** (Qwen e02 661k → 598k). As a first bet: 17–40M or **timeout** | *“Training timed out with d_model=512, 6-layer transformer before producing eval metrics”* |
-| `ENCODER_TYPE=mamba` then `transmamba` | Qwen e02 | Discard. Mamba 933k vs transformer 661k; transmamba 2.49M | *“pure SSM without attention less effective for time-series forecasting”* |
-| `HEAD_TYPE=flatfnn` | CARE e01–e03; Qwen e00–e01 | Usually discard. Crypto mse 33M on one “all-7 domains” try | *“flatfnn … collapsed on crypto outlier (mse=33M); 3.6x worse than cnn baseline”* |
-| Block masking vs random `MASK_RATIO` | Qwen e01 | Discard, 1.39M vs 863k (−61%) | *“Block masking + wider transformer … yield val_mse=1386183 vs iter-3's 863171”* |
-| Finer patches `PATCH_LEN=8`, `NUM_PATCH=64` | Qwen e02 | **Keep — 410k**, best number in these archives | *“Finer patch granularity … beat iter-5 by 31% (598k→410k)”* |
-| Coarser patches / `NUM_PATCH` 15→8 on a broken seed | Ornith | Still ~37M. Session then drowned in stride arithmetic | *“Reduce from 16→4 to decrease per-patch prediction scope”* |
-| `PRED_LAYERS=2` smoke (200+200 steps) | Qwen e02 | Discard, 51.5M vs 598k | *“PRED_LAYERS=2 … val_mse=51.5M (far worse than naive 1.98M)”* |
-| Loss clamp (`MAX_SAMPLE_LOSS_THRESHOLD=10` × median) | Ornith | Discard, 41.3M vs 37M | *“Loss clamping at 10x median … no isolated A/B possible from re-init”* |
-| Rolling-median preprocess (window 16) | Ornith, then a **v2** child | First pass implemented sort-the-center, not a rolling median. Last TSV ~28M | *“Using sort and indexing the center element gives a median, not a rolling median.”* |
-| Joint FT + `POOL=attn` / decoupled `FC_LR` | Qwen e00; CARE e00/e03 | Discard. Best-in-episode 3.25M still > naive 2.0M | *“attn pool backfired — val_mse=4.1M > naive 2.0M … despite 3x params”* |
+The keep ladder is narrow: **full-budget transformer + `domain_wise` (or `batch_wise`) + CNN head**, then width, then **finer patches** (410k, best in these archives). Everything else is a rerun or a wrapper around a dead seed.
 
-The keep ladder that actually moved the number is narrow: **full-budget transformer + `domain_wise` (or `batch_wise`) + CNN head**, then width, then **finer patches**. Everything else is a rerun. Drop-crypto is the clearest “discarded then retried on the next episode” loop — the digest keeps proposing it because train MSE on climate looks pretty.
+| Idea | Where | Outcome |
+|---|---|---|
+| CNN head on a transformer | CARE e00–e02; Qwen e01–e02 | **Keep** once the encoder already beat naive (Qwen e01 1.38M → **863k**; CARE e02 1.20M). Discard on a dead baseline |
+| `NORMALIZE_MODE` `domain_wise` / `batch_wise` vs `global` | all three runs | **Keep** with a working CNN + full budget. **`global` is poison** (Ornith 63M) |
+| Drop crypto / climate-only / MSFT-only | CARE e00/e01/e03; Qwen e00/e03; Ornith | **Discard everywhere.** Train filter does not change the eval mix |
+| Tiny encoder (`D_MODEL` 32–64) | CARE e01–e02; Ornith | Discard. Smaller does not fix a bad domain mix |
+| Scale first (`D_MODEL` 192–512) | Qwen episodes | **Keep only after a beating-naive seed** (661k → 598k). As a first bet: 17–40M or timeout |
+| `mamba` / `transmamba` | Qwen e02 | Discard (933k / 2.49M vs 661k transformer) |
+| `flatfnn` / block mask / `PRED_LAYERS=2` smoke | CARE + Qwen | Discard (block mask −61% vs 863k; smoke 51.5M) |
+| Finer patches `PATCH_LEN=8`, `NUM_PATCH=64` | Qwen e02 | **Keep — 410k** |
+| Loss clamp / fake rolling-median / attn pool + joint FT | Ornith; Qwen e00 | Discard. Rolling-median v2 was `sort()[mid]` |
 
-Protocol waste shows up in the same timelines: overwrite `iter-0` instead of opening `iter-N`, search-replace that deletes `HEAD_TYPE`/`POOL`, a “rolling median” that is just `sort()[mid]`, comma vs tab TSV rows, and a 512-wide transformer that eats the wall clock with no smoke budget. Those are the spans I want the judge to quote. The 410k patch run is the span I want to up-weight.
+Protocol waste in the same timelines: overwrite `iter-0`, search-replace that deletes `HEAD_TYPE`/`POOL`, comma vs tab TSV, a 512-wide transformer with no smoke budget. Those are the spans I want the judge to quote. The 410k patch run is the span I want to up-weight.
 
-## How that sits next to recent work
+## After a keep they sometimes stay, sometimes leave
+
+The program says: after a promising keep, take the next digest idea; after the same idea fails ~2×, soft-pivot; do not keep re-debugging. The archives do all three things, including the one the program forbids.
+
+**Stay and escalate** is the only path that compounded. Qwen e01: CNN + `batch_wise` 1.38M keep → scale to 863k keep. Qwen e02: 929k keep → 661k keep → (mamba/transmamba discards) → **return to the transformer** at 598k → finer patches **410k**. After the encoder pivot failed they came back to the winning axis. That return is the good kind.
+
+**Pivot away from a keep** is mixed. Same e01, after 863k: block masking (1.39M, discard) then `flatfnn` (3.18M, discard). Those were real other categories, not drop-crypto in a wig. CARE e02 after a 1.20M keep immediately left the recipe: two-domain shrink (4.09M), wider CNN (3.43M), `flatfnn` (5.56M). They had the ladder and walked off it.
+
+**Return after failure, with a new wrapper**, is the default on dead seeds. Ornith: `global` + crypto+energy 63M → shrink + `batch_wise` 51M → “broader mix” that still leaves crypto on eval, 37M. CARE e01: 3.4M all-seven → tiny 5.9M → climate-only 2.60M. The idea is still “change the train mix / shrink the net.” The ~2× soft-pivot never fires across episode boundaries.
+
+**Return after success, to a discarded idea**, happens when the next episode forgets. Qwen e03 opens as greenfield, times out a 512-wide first bet, then trains energy+web+climate+tesla only (7.6M). CARE e00’s digest had already written that removing crypto *destroyed* val because eval still has crypto. Later episodes propose it anyway. The digest keeps doing it because climate train MSE looks pretty.
+
+| After | What they did | Example |
+|---|---|---|
+| Keep that beat naive | Escalate same axis | Qwen e01 1.38M → 863k; e02 661k → 598k → 410k |
+| Keep that beat naive | Pivot to a *new* category | e01 block mask, then `flatfnn` (both discard) |
+| Keep that beat naive | Abandon the recipe | CARE e02 1.20M → 2-domain / wider / `flatfnn` |
+| Failed encoder pivot | Return to the keep axis | e02 mamba 933k → transformer 598k |
+| Discard, same episode | Wrapper retry, not a pivot | Ornith shrink / re-norm / “broader mix” |
+| Discard, next episode | Replay the discarded family | drop-crypto on CARE e01/e03, Qwen e00/e03, Ornith |
+
+So: they *do* return to ideas, including after a keep. The useful return is “come back to the transformer after mamba.” The useless return is “drop crypto again because this episode’s SUMMARY is empty.” Span credit should quote those two differently.
+
+## The category table did not steer the next bet
+
+I asked the digest to keep a running picture of idea *categories* and diversity — not just a numbered list of knobs — so the next `{goal}` would leave an exhausted axis. What landed in `SUMMARY.md` is weaker than that.
+
+The digest template already asks for `gaps`, `retrial_candidates`, and 3–8 concrete ideas with a seed. Some episodes added a **knob-surface** table (`Category | Key knobs | Values`: encoder, data mix, normalisation, geometry, head, …). Others wrote “architecture diversity unexplored” or “Retrial candidates: none — no stale retrials.” CARE e00 even said the right sentence: *focus on novel axes rather than re-running existing configs which are well-characterized.*
+
+None of that bound the orchestrator. The table catalogs the *API*, not the *tried set*. “Unexplored” on a resume episode still lists masking, mamba, patch geometry — and the next cycle is another `TRAIN_DOMAINS` filter. Qwen e01’s digest claimed no stale retrials (block mask and `flatfnn` had “clear technical reasons”) and still put “fewer but targeted domains” on the next-session menu. A later episode then ran it. Ornith’s gaps listed loss weighting and quantile SSL; the children ran clamp and a broken rolling median.
+
+| What I wanted | What they wrote | What they ran next |
+|---|---|---|
+| Diversity ledger: category × tried × keep/discard | Knob inventory, or a prose “gaps” list | Same three families (mix, width, head) |
+| `retrial_candidates` as a stop list | Often `n/a` or “none” on a fresh episode | Drop-crypto / tiny net replayed anyway |
+| Soft-pivot after ~2 failures on one idea | New wrapper, same category | Ornith 63M → 51M → 37M |
+| After a keep, spend the next cycle on an *untried* axis | Sometimes (block mask, mamba) | Sometimes walk off the keep (CARE e02) |
+
+The table helped the digest look organized. It did not change the distribution of `{goal}` lines. That is a `hypothesis` span I want the judge to quote: the row that says “novel axes” in the same session that dispatches drop-crypto. Until the ledger is a real object the host can check — category tags on the TSV, not a markdown vibe — asking for diversity is just more SUMMARY tokens.
+
+# How that sits next to recent work
 
 Rubric-as-reward has become the default for open-ended post-training. [Rubric-Grounded RL](https://www.alphaxiv.org/abs/2605.08061) and [RUBRIC-ARROW](https://www.alphaxiv.org/abs/2605.29156) decompose a response into weighted criteria and let a judge score them — partial credit instead of a binary outcome. [Many Voices, One Reward](https://www.alphaxiv.org/abs/2607.01830) generates those rubrics from several roles so one judge is less of a monoculture. That is the channel-judge half of my stack: protocol / hypothesis / self-correction as named heads.
 
@@ -466,7 +490,7 @@ Out of scope, on purpose: DR-LoRA, dynamic rank, packing only hot rows into a sm
 | scratch + inception envs | working, not the long run yet |
 | classic `gspo` + channel judge + GDPO logs | working |
 | unified span judge / resolve / window blend | working |
-| `sessions_meta` MCP (timeline / children / list) | working (judge meta-session; used to catalog bets across runs) |
+| `sessions_meta` MCP (timeline / children / list) | working (used to catalog keep/discard + return/pivot) |
 | alphaXiv MCP on the research + judge bus | **in the mix next** |
 | offline span score on archived rollouts | working (hit-rate is the gate) |
 | entropy viewer + span stars | working |
@@ -477,14 +501,15 @@ Out of scope, on purpose: DR-LoRA, dynamic rank, packing only hot rows into a sm
 | MoE-Sieve / HELLoRA YAML axes + profiler | **planned, not built** |
 | concurrent rollouts as the default | off |
 
-The remaining work is not another algorithm name. It is making the judge cheap and stable enough to sit *inside* every update, then letting Ornith / E4B / Qwen-35B actually step on those tokens for more than a shakeout. [QUADS](https://www.alphaxiv.org/abs/2607.15810) is a reminder that NVFP4 RL has its own quantization noise; I have not hit that wall yet because I have not run long enough.
+The remaining work is not another algorithm name. It is making the judge cheap enough to sit *inside* every update, and making the digest’s category ledger a real stop-list so the next episode cannot greenfield the same discard. [QUADS](https://www.alphaxiv.org/abs/2607.15810) is a reminder that NVFP4 RL has its own quantization noise; I have not hit that wall yet because I have not run long enough.
 
 # What I am trying to learn
 
-If span_level works, two things should move that segment GSPO usually does not:
+If span_level works, three things should move that segment GSPO usually does not:
 
 1. **Main becomes trainable.** One orchestrator segment can carry twenty quoted prompts and handoffs. You no longer need two mains in the window.
 2. **Length stops being the cheat.** Unquoted tokens are silent. A 400-token “training completed, let me analyze the TSV” rant does not get the same $A$ as the eight-token edit that caused the MSE drop.
+3. **Replay gets a sign.** Coming back to the transformer after mamba should not look like coming back to drop-crypto. A SUMMARY table that lists “novel axes” and then dispatches the discarded family should be a negative `hypothesis` span.
 
 If it does not work, the failure modes are already visible: resolve miss on tool XML, judge quoting aftermath, or a rubric that is too open and just narrates the trajectory. Those are prompt and locator problems, not reasons to go back to `0.45 · JEPA`.
 
