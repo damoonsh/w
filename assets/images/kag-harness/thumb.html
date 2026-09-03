@@ -12,88 +12,63 @@
 <canvas id="c" width="1280" height="640"></canvas>
 <script>
 (function () {
-  var c = document.getElementById('c');
-  var ctx = c.getContext('2d');
-  var W = 1280, H = 640;
-  var cx = 640, cy = 320, R = 178;
+  var ctx = document.getElementById('c').getContext('2d');
+  var W = 1280, H = 640, cx = 640, cy = 320, R = 205;
 
-  function noise() {
-    var img = ctx.createImageData(W, H);
-    var d = img.data;
-    for (var i = 0; i < d.length; i += 4) {
-      var n = 14 + Math.random() * 14;
-      d[i] = 40 + n; d[i + 1] = 43 + n; d[i + 2] = 52 + n; d[i + 3] = 255;
-    }
-    ctx.putImageData(img, 0, 0);
+  var img = ctx.createImageData(W, H), d = img.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var n = 12 + Math.random() * 12;
+    d[i] = 41 + n; d[i + 1] = 44 + n; d[i + 2] = 52 + n; d[i + 3] = 255;
   }
+  ctx.putImageData(img, 0, 0);
 
-  function hexPts(r, wobble) {
-    var pts = [];
-    for (var i = 0; i < 6; i++) {
-      var a = -Math.PI / 2 + i * Math.PI / 3;
-      pts.push([
-        cx + r * Math.cos(a) + (Math.random() - 0.5) * wobble,
-        cy + r * Math.sin(a) + (Math.random() - 0.5) * wobble
-      ]);
-    }
-    return pts;
-  }
-
-  function poly(pts) {
+  function hex(r) {
     ctx.beginPath();
-    for (var i = 0; i < pts.length; i++) {
-      var x = pts[i][0] + (Math.random() - 0.5) * 0.9;
-      var y = pts[i][1] + (Math.random() - 0.5) * 0.9;
-      if (i === 0) ctx.moveTo(x, y);
+    for (var k = 0; k < 6; k++) {
+      var a = -Math.PI / 2 + k * Math.PI / 3;
+      var x = cx + r * Math.cos(a);
+      var y = cy + r * Math.sin(a);
+      if (k === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
     ctx.closePath();
   }
 
-  noise();
-
-  // dusk blue, not Kaggle #20BEFF
-  var fill = '#2f6f96';
-
-  poly(hexPts(R, 2.4));
-  ctx.fillStyle = fill;
+  // Kaggle hex, not Kaggle cyan (#20BEFF) — dusk cornflower
+  hex(R);
+  ctx.fillStyle = '#4d7eb8';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(186, 214, 230, 0.35)';
-  ctx.lineWidth = 2.4;
-  ctx.lineJoin = 'round';
-  ctx.stroke();
 
-  ctx.fillStyle = '#eef5f8';
+  ctx.fillStyle = '#f4f8fb';
+  function poly(pts) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j][0], pts[j][1]);
+    ctx.closePath();
+    ctx.fill();
+  }
 
-  // Official-ish Kaggle K, slightly sketched
-  // left arrowhead
+  // Kaggle K geometry (tighter, official-ish)
   poly([
-    [cx - 58, cy],
-    [cx - 8, cy - 68],
-    [cx + 16, cy - 48],
-    [cx - 18, cy],
-    [cx + 16, cy + 48],
-    [cx - 8, cy + 68]
+    [cx - 70, cy],
+    [cx - 10, cy - 82],
+    [cx + 18, cy - 58],
+    [cx - 22, cy],
+    [cx + 18, cy + 58],
+    [cx - 10, cy + 82]
   ]);
-  ctx.fill();
-
-  // upper bar
   poly([
-    [cx + 2, cy - 14],
-    [cx + 28, cy - 58],
-    [cx + 64, cy - 58],
-    [cx + 24, cy - 6]
+    [cx + 2, cy - 16],
+    [cx + 34, cy - 70],
+    [cx + 76, cy - 70],
+    [cx + 28, cy - 6]
   ]);
-  ctx.fill();
-
-  // lower bar
   poly([
-    [cx + 2, cy + 14],
-    [cx + 24, cy + 6],
-    [cx + 64, cy + 58],
-    [cx + 28, cy + 58]
+    [cx + 2, cy + 16],
+    [cx + 28, cy + 6],
+    [cx + 76, cy + 70],
+    [cx + 34, cy + 70]
   ]);
-  ctx.fill();
 })();
 </script>
 </body>
