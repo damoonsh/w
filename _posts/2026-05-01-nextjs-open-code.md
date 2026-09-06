@@ -1,7 +1,7 @@
 ---
 title: "NextJS Benchmarking with OpenCode"
 date: 2026-05-01
-image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/os_releases/init.png
+image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/nextjs_opencode/thumbnail.png
 card_image_object_fit: contain
 description: "Benchmarking recent model releases on a DGX Spark with the Next.js benchmark to gauge capabilities and how useful they might be for day-to-day harness work."
 ---
