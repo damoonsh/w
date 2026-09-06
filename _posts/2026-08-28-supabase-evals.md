@@ -1,6 +1,7 @@
 ---
 title: "Qwen3.8-27B vs DeepSeek-V4-Flash-0731"
 date: 2026-08-28
+published: false
 image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/supabase_evals/oss_llm_pr_pace_lineage.png
 description: "Comparing Qwen3.8-27B and DeepSeek-V4-Flash on supabase-evals — reasoning effort, throughput, and accuracy trade-offs, with OSS inference stack lineage context."
 plotly: true

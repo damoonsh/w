@@ -1,6 +1,7 @@
 ---
 title: "Predicting Volcano Eruptions with Deep Learning: Insights from a Unique Challenge"
 date: 2019-04-25
+image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/volcano/thumb.png
 description: "Deep learning predicts volcano eruption times from multi-sensor signals; top 28% finish."
 ---
 
