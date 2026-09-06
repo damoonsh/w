@@ -139,12 +139,36 @@ Most open RL still looks like contest math. Sample a group, score the final answ
 
 I have been wiring that second interface. An OpenCode team tries to lower JEPA `val_mse`. A second model reads the archive and quotes the spans that caused the credit or the blame. Those quotes are the training targets. Serve is Docker vLLM on NVFP4. Train is [nybbloris](https://github.com/NvMayMay/nvfp4-lora-spark) (`nvfp4_lora`): LoRA on the **same packed NVFP4 / FP8 weights the server is running**, no BF16 shadow of a 30B MoE, then TRL GSPO / GRPO against that endpoint. Off-the-shelf PEFT assumes a trainable `Linear.weight`; those checkpoints do not have one. I intend the same loop on Muse Glimmer, Qwen3.6, Ornith-1.5-35B, Qwen3.8-27B, Nemotron 3.5 Lightning — plus the earlier Gemma / GLM / Ornith-9B shakeouts. For Ornith-1.0-9B I did the NVFP4 conversion myself (Model Optimizer).
 
-Classic segment GSPO still exists. Span-level is the default in config and has been scored on archived rollouts. A full on-policy NVFP4 run that lives on judge quotes is still the thing I am putting together. This post is the stack, then what those archives actually did with their ideas.
+Classic segment GSPO still exists. `algorithm: span_level` is the default in config, and resolve / normalize / span loss have been exercised on archived rollouts. The automated on-policy driver does **not** close that loop yet: it still calls the classic channel judge, while passage judging lives in `run_passage_judge_integration.py`. If no passage files are present, span loss falls back to whole-row GSPO on the segment scalar. A full on-policy NVFP4 run that lives on judge quotes is still the thing I am putting together. This post is the stack, then what those archives actually did with their ideas.
 
 <figure class="ar-fig">
-  <img src="{{ '/assets/images/ar-rl/pipeline.png' | relative_url }}" alt="Episode to segments to span judge to token resolve to GSPO LoRA"/>
-  <figcaption>One update: research episode → cut into sessions → judge quotes → map onto packed tokens → NVFP4 LoRA step.</figcaption>
+  <img src="{{ '/assets/images/ar-rl/architecture.png' | relative_url }}" alt="Plan-tuning architecture: OpenCode research, renderer-aware token capture, archive judge, token-span credit, NVFP4 LoRA training, and adapter feedback"/>
+  <figcaption>The implemented modules, not just the reward sketch. The renderer is the seam: OpenCode still sees chat and tools, while capture, packing, old logprobs, and quote resolution all see the same token ids. The dashed passage edge is the offline/manual glue still missing from the on-policy driver. <a href="{{ '/assets/images/ar-rl/architecture.html' | relative_url }}">Open the HTML diagram.</a></figcaption>
 </figure>
+
+# The loop that actually runs
+
+There are three loops in that picture. The **research loop** is OpenCode inside an OpenShell sandbox: main dispatches digest / tweak children, JEPA returns tool output and `val_mse`, and sequential sessions resume the same workspace. The **credit loop** is implemented as a separate OpenCode process with a separate DB: it walks the archived session graph through `sessions_meta`, writes verbatim passage locators, and the host resolves those locators onto the packed token stream. Today that loop is an offline integration, not a call made by `run_autojepa_onpolicy.sh`. The **weight loop** pauses serving at an update boundary, packs the window, runs the NVFP4-native LoRA step, rekeys and publishes the adapter, then brings vLLM back with that adapter as the policy for the next episode.
+
+That pause is worth spelling out. “One box” does not mean serve and train hold the GB10 at the same instant. Episodes run against Docker vLLM. At the update boundary the proxy / server stop, the judge and trainer consume retained archives and logprobs, then serving restarts on the new adapter. `weight_update.json` plus episode summaries are restart markers: a resumed run skips fresh updates, retries an incomplete train from an existing pack, or rebuilds a stale pack when newer rollouts landed.
+
+The active YAML is an awkward but honest snapshot: `algorithm: span_level`, `group_rollout_type: episode`, `update_every: 1`, concurrency off. The episode-scalar fallback therefore has no sibling contrast and normally z-scores to zero. Quote contrast would fix that, but only after the passage judge is inserted before prep. “Default in config” currently means the intended geometry is selected; it does not mean the driver produces its required passages.
+
+## Why the renderer is in the architecture
+
+OpenCode speaks OpenAI chat: messages, tools, streaming chunks. GSPO needs something lower-level: the exact prompt token ids, sampled completion ids, and old-policy logprob for every completion token. The reverse proxy on `:8001` bridges those interfaces:
+
+1. convert OpenAI messages / tool schemas into the renderer format
+2. use the model-family renderer to create the prompt ids once
+3. call vLLM’s raw token-in generate endpoint
+4. parse returned token ids back into reasoning, content, and tool calls for OpenCode
+5. append the same prompt ids, completion ids, and logprobs to `turns.jsonl`
+
+Qwen3.6 has its own renderer; Qwen3.5 / Ornith use the Qwen XML-tool renderer. Profiles without a tool-capable token-in parser can use the legacy chat-forward path. Non-strict mode also falls back if rendering fails, so a rollout is kept — but the trace records `render_mode`, because “completed” and “token-identical” are different claims.
+
+This is what the renderer buys. There is no server Jinja pass for acting and a second client Jinja pass for training. Tool-call boundaries are the boundaries the policy emitted. A judge quote is resolved against the ids that produced the action, not a retokenized reconstruction. That does not make every packed ratio exact: the flat main pack deliberately drops child `task_result` / handoff environment payloads. Completion ids and captured logprobs still match, but after the first omitted handoff the later tokens were sampled under a richer prefix than the packed one. The pack writes `logprob_alignment: post_handoff_omission` instead of hiding that caveat.
+
+The other memory path is now code, not a note. Phase 1 can accumulate entropy scores on CPU; the backward pass can use `save_on_cpu`; very long saved-activation towers can unload to disk or CPU above `tower_unload_token_threshold`; and `token_grad_accum_threshold` splits an oversized update into ordered token-budget chunks without dropping the remainder. The frozen NVFP4 / FP8 base still never becomes a persistent BF16 twin. Those controls make a 100k-token research row trainable on the same machine; they do not change which tokens receive credit.
 
 # Why research as the train set
 
@@ -185,6 +209,8 @@ Scratch / inception drop the printed workflow. The only structural rule is title
 
 **`auto-jepa-inception-scratch`.** Same, plus it has to **test** the harness it wrote. The loop in the program is: design → `opencode run …` on those files → watch what the child did → revise → try again. Nested sessions execute the agent-written workflow, not a hardcoded playbook. Optional agent-made MCPs; none are prescribed. The scratch judge treats a nested `opencode` trial that actually finished as a viability plus (`nested_opencode_succeeded`).
 
+Scratch / inception do not reuse the classic three-head rubric unchanged. `judge_reward_scratch.yaml` scores four channels — creativity, viability, self-correction, and instruction following — and mixes that judge score 0.60 with a 0.40 heuristic base. Dynamic `aj-*-<kind>` children are still segmentized even when the harness invents a role name.
+
 **Big shapes, small follows — not an env id yet.** The other room I want is hierarchical, and I never wired it. A larger model writes or edits the workflow (the `program` / prompt files / loop). A mid-size NVFP4 model *runs* that room for a budget. The large one comes back, reads the archive, and reshapes the harness — then the small one follows again. Closest thing that exists is mixed `episode_schedule` phases, but every phase still uses the same `model_profile`. Switching serve mid-episode, and treating “reshape the program” as its own segment kind, is the missing env. I would not collapse it into inception: inception is one model inventing and dogfooding its own OpenCode children. This is two sizes, one sandbox.
 
 This is the “research as training” part. I do not want another verifiable-math adapter. I want a mid-size NVFP4 model that can run a research room — including inventing the room, and eventually running a room a bigger model just redrew.
@@ -195,7 +221,7 @@ The models I actually want to move are mid-size and already (or about to be) qua
 
 Ornith-1.0-9B is the shakeout because I converted it myself. If the conversion is wrong, I want to find that on a dense 9B before I spend a week on Qwen-35B-A3B. Same serve container, same LoRA hot-reload name, different `model_profile`.
 
-Train keeps the base frozen and quantized; only BF16 adapters move. That is what [nybbloris](https://github.com/NvMayMay/nvfp4-lora-spark) is for: `NVFP4LoRALinear` dequants into a workspace, adds $(\alpha/r)\,xA^\top B^\top$ in BF16, and recomputes dequant in backward so a full-weight BF16 graph never sits on the UMA pool. Same library rekeys the adapter for vLLM so a silent miss does not serve the un-adapted base. Serve and train talk to the same vLLM. Prompt tokens are rendered client-side and sent as token-in so the logprobs in the trajectory are the tokens the model actually ran, not a second Jinja pass that drifted.
+Train keeps the base frozen and quantized; only BF16 adapters move. That is what [nybbloris](https://github.com/NvMayMay/nvfp4-lora-spark) is for: `NVFP4LoRALinear` dequants into a workspace, adds $(\alpha/r)\,xA^\top B^\top$ in BF16, and recomputes dequant in backward so a full-weight BF16 graph never sits on the UMA pool. The same library rekeys the adapter for vLLM so a silent miss does not serve the un-adapted base. Train consumes the same frozen checkpoint and captured old-policy logprobs; vLLM is paused for the update, then restarted on the published adapter. Prompt tokens are rendered client-side and sent as token-in so the logprobs in the trajectory are the tokens the model actually ran, not a second Jinja pass that drifted.
 
 That last bit matters more once the judge is quoting substrings. If pack ≠ serve, resolve hit-rate dies and you train on nothing.
 
@@ -238,13 +264,18 @@ $$
 
 That sum is **not** a mean. Two $-0.6$ heads on one quote is $\rho=-1.2$ before z-score. Then:
 
+The judge contract is strict — copy a verbatim quote, turn, and region — but the host resolver is deliberately a little less brittle:
+
 $$
-Q_j=\mathrm{resolve}(\mathrm{turn}_j\cap\mathrm{quote}_j\cap\mathrm{region}_j)
+Q_j=\mathrm{supervised}\!\left(
+\mathrm{region}_j\!\left[
+\mathrm{resolve}(\mathrm{quote}_j)\ \cap\ \mathrm{window}(\mathrm{turn}_j)
+\right]\right)
 $$
 
-Miss (tool XML vs bash, truncated `QUOTE:`, wrong turn) $\Rightarrow$ drop $j$, no invented nearby span.
+That intersection is the happy path, not an absolute gate. Prep only has an approximate turn map — it buckets supervised tokens across the packed row’s turn count — so the quote is the reliable locator. If quote and turn are disjoint, the supervised quote hit wins; if only the turn lands, the turn window can be used. A region hint narrows the match when it can, but a verified quote is not discarded solely because the hint was wrong. Quote matching normalizes whitespace / curly quotes and a short list of timeline representation drift (`> QUOTE:`, tool-name prefixes, arrows, backticks, ellipsis, limited suffix trim). It does **not** search for a semantically nearby sentence. No supervised match $\Rightarrow$ drop $j$.
 
-The $z$ is not only “all quotes in one bag.” There are three pools I can mix. The one people miss is **by region**, not by main/digest/tweak:
+The resolver records a region for every quote, and a legacy normalization helper can z-score **by region**, not by main/digest/tweak:
 
 $$
 z_{\mathrm{type}}(\rho_j)=z\bigl(\{\rho_{j'}:\ \mathrm{region}_{j'}=\mathrm{region}_j\}\bigr)
@@ -252,7 +283,7 @@ $$
 
 $\mathrm{region}\in\{\texttt{thinking},\ \texttt{tool\_call},\ \texttt{message}\}$. Tool quotes z-score against other tools. Thinking against thinking. A lone `tool_call` in that pool is a singleton $\Rightarrow$ that term is $0$, same rule as a lone main under `gspo`. That is the point: a $-0.9$ bash with hallucinated args should not set the mean for a $-0.2$ “wait…” wall, and a compact thought should not look like a win just because the tools were worse.
 
-The other two pools are the ones in the default YAML (`span_norm`):
+That `by_type` helper is useful for offline comparisons, but it is **not mixed into the active train path**. The train path wires only the two pools in `span_norm`:
 
 $$
 A_j = 0.25\,z_{\mathrm{seg}}(\rho_j)+0.5\,z_{\mathrm{window}}(\rho_j)
@@ -260,7 +291,7 @@ $$
 
 $z_{\mathrm{seg}}$: the other quotes **on this packed row**. $z_{\mathrm{window}}$: every resolved quote from every session / phase / replica in the prep — `"2x5 + 1x10 + 3x3"` is one pool. Singleton quote on a row $\Rightarrow$ the segment term is $0$; the window term can still move it.
 
-`normalize_span_rewards` still takes `norm_scope: by_type | global | by_parent_segment`. The train path I actually run is the two-weight blend (segment + window), not `by_type` alone. I kept the type pool because that is the grouping I want when I turn it back on — and `entropy_shape.group: by_type` already does the same split for GTPO / GRPO-S (tools shaped with tools). There is also an offline scheme that z-scores **per criteria tag** first (`hypothesis` vs `process` vs `bad_tool_call`) then $\sum z\cdot w$; that is a compare script, not the default gradient.
+`normalize_span_rewards` still takes `norm_scope: by_type | global | by_parent_segment`, but `prep_grpo_data.py` calls the segment + window blend directly. Separately, `entropy_shape.group: by_type` can split GTPO / GRPO-S shaping by token region; the active YAML uses `group: batch`, and entropy shaping is off. There is also an offline scheme that z-scores **per criteria tag** first (`hypothesis` vs `process` vs `bad_tool_call`) then $\sum z\cdot w$; that is a compare script, not the default gradient.
 
 $$
 A_t^{\mathrm{span}}=
@@ -299,8 +330,8 @@ That is the whole difference. One number vs many quotes; smear vs paint; kind-po
 |---|---|---|
 | Reward $r$ | JEPA + process + 2–3 channel heads, **per kind** | $\sum w s$ on each quote; **no** JEPA / process in $A_t$ |
 | Units per packed row | $1$ | $K_i$ (no cap; unresolved dropped) |
-| Who is in the $z$-pool | other **segments of that kind** (main / digest / tweak) | default: other **quotes** on the row + the whole window. Also available: **by region** (`thinking` / `tool_call` / `message`), or per criteria tag offline |
-| Singleton | one main $\Rightarrow A=0$ | one quote on a row $\Rightarrow z_{\mathrm{seg}}=0$; one `tool_call` in a `by_type` pool $\Rightarrow$ that type term is $0$; window can still score it |
+| Who is in the $z$-pool | other **segments of that kind** (main / digest / tweak) | active path: other **quotes** on the row + the whole window. Region and criteria pools are offline helpers |
+| Singleton | one main $\Rightarrow A=0$ | one quote on a row $\Rightarrow z_{\mathrm{seg}}=0$; the window term can still score it |
 | Unquoted tokens | same $A_i$ as the bad edit | $A_t=0$ |
 | Overlap | n/a | later quote overwrites |
 | Resolve miss | n/a | passage gone |
@@ -310,11 +341,11 @@ That is the whole difference. One number vs many quotes; smear vs paint; kind-po
 
 ## `gspo` — segment scalar
 
-Cut the chat into main / digest / tweak. Score each segment. Compare **only within kind**. Kind weights: tweak 1.0, digest 0.8, main 0.35. Then that $A_i$ is the whole packed row.
+Cut the chat into main / digest / tweak. Score each segment. Under session grouping, compare **only within kind**. Kind weights: tweak 1.0, digest 0.8, main 0.35. Then that $A_i$ is the whole packed row.
 
 With `group_rollout_type: session` and one episode per update you often get **one main and one digest**. Singleton kinds get advantage 0. Tweaks drive learning because there are several of them. That is honest, and also why I stopped trusting this as the long-term signal. Main is where the spawn prompts live.
 
-`group_rollout_type: episode` is the other grouping: z-score the rollout score across the window and broadcast one $A$ to every segment. Needs ≥2 rollouts. Still one number per episode.
+`group_rollout_type: episode` is the other grouping: z-score the rollout score across the window and broadcast one $A$ to every segment. Needs ≥2 rollouts. Still one number per episode. It is also the **active** YAML setting; with `update_every: 1` and concurrency off, its scalar advantage is zero. Session grouping above describes the available classic path, not today’s selected config.
 
 [GDPO](https://www.alphaxiv.org/abs/2601.05242) sits on the episode log path so the channel heads do not collapse into one mush before you even look at them. Training, though, still ends as one scalar per segment.
 
@@ -388,7 +419,9 @@ $$
 
 That is why I still have GDPO on the episode log: those heads stay named. Training, though, still collapses to one scalar per segment.
 
-**Unified span judge** (`algorithm: span_level`). One rubric for main / digest / tweak / misc. Soft criteria remember the old heads so I did not throw the ideas away. Any tag can be reward or penalty. There is **no** `outcome` tag — keep/discard / improve/regress folds into `hypothesis` (or `self_correction` when they recover after a bad bet). Score is a list of breakdowns, each `score ∈ [-1, 1]`, `weight > 0` (default 1). Same criterion can appear twice with two reasons. No top-level `score`; the host aggregates.
+There is also a smaller score-time judge in `R_process`: **think-condense** selects up to four long “wait… / reconsider / actually” reasoning blocks, asks the same host model to compress each given the action that followed, and penalizes the removable fraction. It is on by default and can be disabled with `AR_RL_THINK_CONDENSE=0`. It is not written into `turns.jsonl`, and it is not token credit.
+
+**Unified span judge** (`algorithm: span_level`, offline integration today). One rubric for main / digest / tweak / misc. Soft criteria remember the old heads so I did not throw the ideas away. Any tag can be reward or penalty. There is **no** `outcome` tag — keep/discard / improve/regress folds into `hypothesis` (or `self_correction` when they recover after a bad bet). Score is a list of breakdowns, each `score ∈ [-1, 1]`, `weight > 0` (default 1). Same criterion can appear twice with two reasons. No top-level `score`; the host aggregates.
 
 | criteria | Who | Look for | What I want quoted |
 |---|---|---|---|
@@ -452,7 +485,7 @@ Host $\rho=\sum w s$ (sum, not mean): here $-0.7+-0.4=-1.10$. Then $A=0.25\,z_{\
 
 Unquoted tokens stay $A_t=0$. p0 and p4 are the smear I do **not** want on the whole tweak: only the “I removed BATCH_SIZE” thought and the train command that still had `None`. p8 is the discard analysis — up-weight that, not the 37M dump. p1/p3/p5 are the restores; they should not cancel p0.
 
-Resolve maps that quote onto the packed thinking tokens. Mean span length on the first offline Qwen test was ~22 tokens, hit-rate 0.60. That is the number I watch. Below ~0.5 the judge is writing literature, not locators.
+Resolve maps that quote onto the packed thinking tokens. Mean span length on the first offline Qwen test was ~22 tokens, hit-rate 0.60. That is the number I watch. Below ~0.5 the judge is writing literature, not locators. I still prompt for exact quotes even though the host tolerates formatting drift: every fallback makes the locator less diagnostic. `calibrate_passage_judge.py` gates hit-rate without training; the integration script can refile a passage when its quote is absent from the assigned segment but present in another packed row, and the compare scripts sweep normalization schemes / segment-window weights before a gradient is trusted.
 
 <div class="ar-call">
 Resolve status is not a quality grade. Unresolved means the host could not land the quote on supervised tokens — often because the timeline shows bash and the packed row shows tool XML. The passage is dropped. Inventing a nearby span would be worse.
@@ -678,25 +711,31 @@ Out of scope, on purpose: DR-LoRA, dynamic rank, packing only hot rows into a sm
 | Piece | State |
 |---|---|
 | NVFP4 serve + LoRA train on mid-size profiles | working (smoke + on-policy scripts) |
+| renderer-aware token-in proxy + exact ids / old logprobs | working; legacy chat fallback is recorded per turn |
+| restart-safe episode / pack / weight-update recovery | working (fresh/stale markers, retained archives) |
+| long-row entropy / activation offload + tower unload | working; configurable CPU or disk path |
 | Ornith-1.0-9B NVFP4 conversion (mine) | used as shakeout |
 | Mixed episode shapes (`2x5 + 1x10 + 3x3`, per-phase env) | working |
 | scratch + inception envs (`auto-jepa-scratch`, `auto-jepa-inception-scratch`) | working, not the long run yet |
 | big-shapes / small-follows / big-reshapes env | **idea only** — no env id; schedule cannot switch `model_profile` mid-episode |
 | classic `gspo` + channel judge + GDPO logs | working |
-| unified span judge / resolve / window blend | working |
+| scratch / inception four-channel judge | working |
+| score-time think-condense process judge | working, outside trajectories / token credit |
+| unified span judge / resolve / window blend | working offline / integration-tested; not called by the on-policy driver |
 | `sessions_meta` MCP (timeline / children / list) | working (used to catalog keep/discard + return/pivot) |
 | alphaXiv MCP on the research + judge bus | **in the mix next** |
 | offline span score on archived rollouts | working (hit-rate is the gate) |
 | entropy viewer + span stars | working |
 | Jacobian-lens probe (base vs CARE vs last-4) | working, offline |
-| default `algorithm: span_level` | set |
-| full on-policy span_level numbers I would publish | **not done** |
+| default `algorithm: span_level` | selected, but the driver does not yet create passage files |
+| full on-policy span_level judge → paint → update | **not wired / not done** |
 | GTPO / GRPO-S on real research traces | wired, not run |
 | MoE-Sieve / HELLoRA YAML axes + profiler | **planned, not built** |
-| concurrent rollouts as the default | off |
+| route-safe parallel sandbox replicas | working, disabled in the active config |
 | judge ablations (policy-as-judge / frozen / separate model) | **planned** |
 | cross-model Jacobian + path (Glimmer, Qwen3.6/3.8, Ornith-1.5-35B, Nemotron 3.5 Lightning) | **planned** |
-| LoRA mechanics (CARE / FA / last-4 / asymmetric $r$ / Sieve / random-$k$ / hybrid) | **planned** (YAML axes exist; Sieve mask + rekey not built) |
+| CARE + LoRA-FA / periodic-$A$ schedule | working in model profiles / on-policy shell |
+| expert LoRA mechanics (asymmetric $r$, Sieve, random-$k$, hybrid) | **planned**; mask + expert rekey not built |
 
 The remaining work is not another algorithm name. It is making the judge cheap enough to sit *inside* every update, and making the digest’s category ledger a real stop-list so the next episode cannot greenfield the same discard. [QUADS](https://www.alphaxiv.org/abs/2607.15810) is a reminder that NVFP4 RL has its own quantization noise; I have not hit that wall yet because I have not run long enough.
 
@@ -775,7 +814,7 @@ GRPO wants a **group** of answers per prompt. For agentic work that group is a l
 
 They run Qwen3-30B-A3B on tool-math and SWE-Bench (OpenHands, up to 300 turns). They also claim single-rollout is the setting that can track a **changing** env.
 
-**Same diagnosis as here.** `update_every: 1` plus one sandbox is already their single-rollout regime. Classic `gspo` then dies the way they say GRPO dies: one main / one digest $\Rightarrow A=0$. `span_level` is my answer to “I only have one trajectory, I still need contrast.” Their contrast is $V(s)$. Mine is other **quotes** in the row / window / `by_type` pool.
+**Same diagnosis as here.** `update_every: 1` plus one sandbox is already their single-rollout regime. With the active `group_rollout_type: episode`, classic `gspo` has one rollout in its pool and gets $A=0$ everywhere; session grouping would at least contrast tweaks while leaving singleton main / digest at zero. `span_level` is my answer to “I only have one trajectory, I still need contrast.” Their contrast is $V(s)$. Mine is other **quotes** in the row and update window — once the passage judge is actually wired into that update.
 
 Skip-observation GAE and the paint rule are the same refuse. Tool stdout, TSV dumps, continue/handoff blobs are $o_i$. They skip those in the Bellman backup. I set $A_t=0$ unless the judge landed a quote. Aftermath quoting is exactly the failure they designed GAE to avoid.
 

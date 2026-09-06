@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plan-tuning architecture</title>
+  <style>
+    :root {
+      --paper: #f3eee4;
+      --ink: #23313a;
+      --muted: #61717a;
+      --line: #91a0a4;
+      --rollout: #d8c7b9;
+      --render: #b9d0db;
+      --judge: #c9d2bf;
+      --train: #c9bdcf;
+      --store: #dccdb6;
+      --observe: #d8d4c9;
+      --hot: #a94b3f;
+      --good: #3e7358;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 1600px;
+      height: 1000px;
+      margin: 0;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      background-image:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,.65), transparent 27%),
+        radial-gradient(circle at 88% 92%, rgba(171,141,118,.10), transparent 30%);
+    }
+    main {
+      position: relative;
+      width: 1600px;
+      height: 1000px;
+      padding: 38px 46px 34px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.05;
+      letter-spacing: -.03em;
+      font-weight: 720;
+    }
+    .dek {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: .015em;
+    }
+    .legend {
+      position: absolute;
+      top: 42px;
+      right: 46px;
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      color: var(--muted);
+      font: 600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .legend span { display: inline-flex; gap: 6px; align-items: center; }
+    .dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+    .stage-label {
+      position: absolute;
+      left: 50px;
+      width: 102px;
+      color: var(--muted);
+      font: 700 11px/1.25 ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .stage-label::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      left: 108px;
+      width: 24px;
+      height: 1px;
+      background: var(--line);
+    }
+    .s1 { top: 157px; }
+    .s2 { top: 455px; }
+    .s3 { top: 734px; }
+    .node, .group {
+      position: absolute;
+      border: 1.4px solid rgba(35,49,58,.54);
+      border-radius: 12px;
+      box-shadow: 0 2px 0 rgba(35,49,58,.06);
+    }
+    .node {
+      padding: 15px 17px 14px;
+    }
+    .node h2 {
+      margin: 0 0 7px;
+      font-size: 16px;
+      line-height: 1.1;
+      letter-spacing: -.015em;
+    }
+    .node p {
+      margin: 0;
+      color: #43545d;
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .node .mono, .group .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .92em;
+    }
+    .tag {
+      display: inline-block;
+      margin: 7px 4px 0 0;
+      padding: 3px 6px;
+      border: 1px solid rgba(35,49,58,.20);
+      border-radius: 999px;
+      color: #40525b;
+      background: rgba(255,255,255,.26);
+      font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .rollout { background: var(--rollout); }
+    .render { background: var(--render); }
+    .judge { background: var(--judge); }
+    .train { background: var(--train); }
+    .store { background: var(--store); }
+    .observe { background: var(--observe); }
+    .group {
+      padding: 13px 15px;
+      background: rgba(255,255,255,.16);
+      border-style: dashed;
+    }
+    .group-title {
+      color: var(--muted);
+      font: 700 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 10px;
+    }
+    .n-rollout { left: 184px; top: 126px; width: 258px; height: 196px; }
+    .n-render { left: 484px; top: 126px; width: 380px; height: 196px; }
+    .n-vllm { left: 906px; top: 126px; width: 244px; height: 196px; }
+    .n-trace { left: 1192px; top: 126px; width: 270px; height: 196px; }
+    .render-flow {
+      display: grid;
+      grid-template-columns: 1fr 20px 1fr 20px 1fr;
+      gap: 4px;
+      align-items: center;
+      margin: 9px 0 8px;
+      font: 650 10px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #314751;
+    }
+    .render-step {
+      min-height: 54px;
+      padding: 8px 5px;
+      border-radius: 7px;
+      border: 1px solid rgba(35,49,58,.18);
+      background: rgba(255,255,255,.28);
+      display: flex;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
+    }
+    .mini-arrow { text-align: center; font-size: 14px; color: #5d737d; }
+    .why {
+      margin-top: 8px;
+      padding: 7px 9px;
+      border-left: 3px solid var(--good);
+      background: rgba(255,255,255,.25);
+      color: #294e3b;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .n-pack { left: 184px; top: 413px; width: 258px; height: 198px; }
+    .n-meta { left: 484px; top: 413px; width: 250px; height: 198px; }
+    .n-resolve { left: 776px; top: 413px; width: 300px; height: 198px; }
+    .n-adv { left: 1118px; top: 413px; width: 344px; height: 198px; }
+    .span-line {
+      display: flex;
+      gap: 3px;
+      margin: 11px 0 9px;
+    }
+    .tok {
+      width: 20px;
+      height: 17px;
+      border-radius: 3px;
+      background: rgba(255,255,255,.42);
+      border: 1px solid rgba(35,49,58,.18);
+    }
+    .tok.hot {
+      background: rgba(169,75,63,.64);
+      border-color: var(--hot);
+    }
+    .tok.keep { box-shadow: inset 0 -3px var(--good); }
+    .n-memory { left: 184px; top: 699px; width: 286px; height: 194px; }
+    .n-trainer { left: 512px; top: 699px; width: 305px; height: 194px; }
+    .n-publish { left: 859px; top: 699px; width: 270px; height: 194px; }
+    .n-observe { left: 1171px; top: 699px; width: 291px; height: 194px; }
+    .footnote {
+      position: absolute;
+      left: 184px;
+      bottom: 30px;
+      color: var(--muted);
+      font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    svg.wires {
+      position: absolute;
+      inset: 0;
+      width: 1600px;
+      height: 1000px;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .wire {
+      fill: none;
+      stroke: #65777f;
+      stroke-width: 2;
+      marker-end: url(#arrow);
+    }
+    .wire.feedback {
+      stroke: var(--good);
+      stroke-width: 2.4;
+      marker-end: url(#arrow-green);
+    }
+    .wire.dashed {
+      stroke-dasharray: 6 6;
+      stroke-width: 1.7;
+    }
+    .wire-label {
+      font: 650 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      fill: #5b6d75;
+      paint-order: stroke;
+      stroke: var(--paper);
+      stroke-width: 5px;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Plan-tuning: token credit on a research loop</h1>
+  <div class="dek">Implemented modules end to end; the dashed passage-judge edge is still an offline/manual integration, not a call in the on-policy driver.</div>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--rollout)"></i> rollout</span>
+    <span><i class="dot" style="background:var(--render)"></i> token boundary</span>
+    <span><i class="dot" style="background:var(--judge)"></i> credit</span>
+    <span><i class="dot" style="background:var(--train)"></i> update</span>
+  </div>
+
+  <div class="stage-label s1">01<br>act + capture</div>
+  <div class="stage-label s2">02<br>locate credit</div>
+  <div class="stage-label s3">03<br>learn + serve</div>
+
+  <section class="node rollout n-rollout">
+    <h2>OpenCode research team</h2>
+    <p><b>main</b> dispatches; <b>digest</b> reads history; <b>tweak</b> edits an <span class="mono">iter-N</span>, trains JEPA, then keeps or discards.</p>
+    <span class="tag">OpenShell sandbox</span>
+    <span class="tag">mixed session schedule</span>
+    <span class="tag">scratch / inception</span>
+    <p style="margin-top:9px">Feedback from the world is late and messy: tool output, commits, <span class="mono">results_jepa.tsv</span>, and <span class="mono">val_mse</span>.</p>
+  </section>
+
+  <section class="node render n-render">
+    <h2>Renderer-aware logprob proxy</h2>
+    <div class="render-flow">
+      <div class="render-step">messages<br>+ tools</div>
+      <div class="mini-arrow">→</div>
+      <div class="render-step">model renderer<br><span class="mono">render()</span></div>
+      <div class="mini-arrow">→</div>
+      <div class="render-step">exact prompt<br>token ids</div>
+    </div>
+    <p><span class="mono">parse_response(token_ids)</span> turns the model output back into content, reasoning, and tool calls for OpenCode.</p>
+    <div class="why"><b>Why it helps:</b> rollout, old logprobs, packing, and quote resolution share one token stream. No second Jinja pass can move the target.</div>
+  </section>
+
+  <section class="node render n-vllm">
+    <h2>Docker vLLM</h2>
+    <p>Token-in generation on frozen packed <b>NVFP4 / FP8</b> weights. Returns completion token ids plus per-token old-policy logprobs.</p>
+    <span class="tag">base + active LoRA</span>
+    <span class="tag">long context</span>
+    <p style="margin-top:10px">The same endpoint is the policy the agents use and the reference stream GSPO later compares against.</p>
+  </section>
+
+  <section class="node store n-trace">
+    <h2>Two evidence stores</h2>
+    <p><b>Trajectory:</b> <span class="mono">turns.jsonl</span> keeps prompt ids, completion ids, logprobs, and render mode.</p>
+    <p style="margin-top:9px"><b>Archive:</b> OpenCode SQLite + sandbox artifacts preserve the session graph and experiment result.</p>
+    <span class="tag">route-safe replicas</span>
+    <span class="tag">resume-safe artifacts</span>
+  </section>
+
+  <section class="node store n-pack">
+    <h2>Segment + pack</h2>
+    <p>Split the archive into one row per <b>main / digest / tweak</b>. Stitch exact captured completions; mask environment/tool-result tokens.</p>
+    <p style="margin-top:9px">Main stays flat and excludes child handoff payloads. Chat resets never leak across rows.</p>
+    <span class="tag">input_ids</span>
+    <span class="tag">old_logprobs</span>
+    <span class="tag">region map</span>
+  </section>
+
+  <section class="node judge n-meta">
+    <h2>Judge meta-session</h2>
+    <p>A separate OpenCode parent spawns one child per segment. Children walk small archive windows through <span class="mono">sessions_meta</span> MCP.</p>
+    <p style="margin-top:9px">Output: quote + turn + region + scored criteria. <b>Offline only today:</b> the driver still calls the channel judge.</p>
+  </section>
+
+  <section class="node judge n-resolve">
+    <h2>Host resolves the locator</h2>
+    <p>Resolve <span class="mono">quote</span> and <span class="mono">turn</span>; intersect when they agree. On a disjoint turn, a supervised quote hit wins. Region narrows when possible.</p>
+    <div class="span-line" aria-label="quoted span mapped to tokens">
+      <i class="tok"></i><i class="tok"></i><i class="tok hot"></i><i class="tok hot"></i><i class="tok hot"></i><i class="tok"></i><i class="tok"></i><i class="tok"></i>
+    </div>
+    <p><b>No supervised match → drop.</b> Formatting drift is normalized, but no arbitrary nearby span is invented.</p>
+    <span class="tag">thinking</span><span class="tag">tool_call</span><span class="tag">message</span>
+  </section>
+
+  <section class="node judge n-adv">
+    <h2>Paint token advantage</h2>
+    <p>For each resolved quote: sum weighted rubric scores, then blend within-segment and whole-window z-scores.</p>
+    <div class="span-line">
+      <i class="tok"></i><i class="tok"></i><i class="tok hot keep"></i><i class="tok hot"></i><i class="tok hot keep"></i><i class="tok"></i><i class="tok"></i><i class="tok"></i><i class="tok"></i>
+    </div>
+    <p>Unquoted tokens get <b>A = 0</b>. A separate top-entropy mask decides which painted tokens enter each quote’s GSPO mean.</p>
+    <span class="tag">0.25 z-segment</span><span class="tag">0.5 z-window</span>
+  </section>
+
+  <section class="node train n-memory">
+    <h2>Single-box memory path</h2>
+    <p>The base never becomes a BF16 shadow. Forward dequantizes into a workspace; only BF16 LoRA A/B move.</p>
+    <p style="margin-top:9px">Phase-1 entropy can offload scores. Very long saved activation towers can unload to disk or CPU before backward.</p>
+    <span class="tag">CARE / LoRA-FA</span>
+  </section>
+
+  <section class="node train n-trainer">
+    <h2>Span GSPO LoRA step</h2>
+    <p>One clipped sequence importance ratio <b>per resolved quote</b>, weighted by quote length. Rows are chunked by a token budget; chunks train sequentially in one update.</p>
+    <p style="margin-top:9px">No passage file → whole-row scalar fallback. Classic segment GSPO uses that smeared path directly.</p>
+    <span class="tag">NVFP4-native backward</span>
+  </section>
+
+  <section class="node train n-publish">
+    <h2>Rekey + publish adapter</h2>
+    <p>Convert trainer keys to vLLM runtime-LoRA names, archive the checkpoint, publish the served copy, and restart/reload the policy.</p>
+    <p style="margin-top:9px"><b>The next episode runs the updated adapter.</b> Completed episode and update markers make the outer loop resumable.</p>
+  </section>
+
+  <section class="node observe n-observe">
+    <h2>Observe, outside the loss</h2>
+    <p><b>Entropy viewer:</b> tree → regions → token entropy, keep flags, and judge stars.</p>
+    <p style="margin-top:9px"><b>jprobe:</b> base vs adapter residual / next-token shifts on research probes and held-out canaries.</p>
+    <span class="tag">diagnostic only</span>
+  </section>
+
+  <svg class="wires" viewBox="0 0 1600 1000" aria-hidden="true">
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#65777f"></path>
+      </marker>
+      <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#3e7358"></path>
+      </marker>
+    </defs>
+    <path class="wire" d="M442 224 H484"></path>
+    <path class="wire" d="M864 224 H906"></path>
+    <path class="wire" d="M1150 224 H1192"></path>
+    <text class="wire-label" x="875" y="212">token-in</text>
+    <text class="wire-label" x="1156" y="212">ids + logprobs</text>
+
+    <path class="wire" d="M1327 322 V355 H313 V413"></path>
+    <text class="wire-label" x="1075" y="347">captured tokens</text>
+    <path class="wire dashed" d="M1327 322 V382 H609 V413"></path>
+    <text class="wire-label" x="766" y="375">SQLite + workspace archive</text>
+    <path class="wire dashed" d="M734 512 H776"></path>
+    <text class="wire-label" x="740" y="500">manual passages</text>
+    <path class="wire" d="M442 512 H484"></path>
+    <path class="wire" d="M1076 512 H1118"></path>
+    <text class="wire-label" x="1081" y="500">token spans</text>
+
+    <path class="wire" d="M1290 611 V649 H664 V699"></path>
+    <text class="wire-label" x="936" y="642">token_advantage + entropy keep-mask</text>
+    <path class="wire" d="M470 796 H512"></path>
+    <path class="wire" d="M817 796 H859"></path>
+    <path class="wire dashed" d="M1129 796 H1171"></path>
+    <path class="wire feedback" d="M994 699 V660 H1510 V105 H1028 V126"></path>
+    <text class="wire-label" x="1215" y="650">checkpoint feedback</text>
+    <text class="wire-label" x="1268" y="98">updated policy for next episode</text>
+  </svg>
+
+  <div class="footnote">implemented modules in <span class="mono">ar-rl</span> · dashed = offline/manual glue · expert-sieve and mid-episode model switching remain planned</div>
+</main>
+</body>
+</html>
