@@ -2,7 +2,7 @@
 title: "Plan-tuning mid-size models"
 date: 2026-09-02
 tags: [RL, GSPO, NVFP4, judges]
-image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/ar-rl/thumb-sketch.png
+image: https://raw.githubusercontent.com/damoonsh/w/refs/heads/main/assets/images/ar-rl/thumb.png
 description: "Mid-build notes on training mid-size NVFP4 models on LLM research traces: span-level token updates, what archived agents actually retried after keep/discard, and a MoE-Sieve plan for later."
 ---
 
